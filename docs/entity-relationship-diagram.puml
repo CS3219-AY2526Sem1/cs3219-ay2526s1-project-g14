@@ -1,0 +1,71 @@
+@startuml
+
+' avoid problems with angled crows feet
+
+entity "User" as user {
+    *user_id: number <<generated>>
+    --
+    *username: text
+    *email: text
+    *passwordHash: text
+    topic: text
+    difficulty: text
+}
+
+entity "Questions" as questions {
+    *question_id: number <<generated>>
+    --
+    *title: text
+    *description: text
+    *topic: TopicEnum
+    *difficulty: DifficultyEnum
+}
+
+entity "User Question History" as history {
+    *history_id: number <<generated>>
+    --
+    *participants: [user_id] (FK)
+    *question_id: number (FK)
+    *status: StatusEnum
+    *startedAt: datetime
+    *endedAt: datetime
+}
+
+' Enums
+enum DifficultyEnum {
+    Easy
+    Medium
+    Hard
+}
+
+enum TopicEnum {
+    Arrays
+    Graphs
+    Algorithms
+    Database
+}
+
+enum StatusEnum {
+    Not started
+    In progress
+    Completed
+}
+
+user::user_id ||--o{ history::participants
+questions::question_id ||--o{ history::question_id
+
+' Link fields to enums
+questions::difficulty -- DifficultyEnum
+questions::topic -- TopicEnum
+history::status -- StatusEnum
+
+legend right
+    == Legend ==
+    *field : compulsory / not null
+    field : optional / nullable
+
+    PK : Primary Key
+    FK : Foreign Key
+endlegend
+
+@enduml
