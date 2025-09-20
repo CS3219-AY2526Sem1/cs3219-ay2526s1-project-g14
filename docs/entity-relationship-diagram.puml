@@ -17,6 +17,7 @@ entity "Questions" as questions {
     --
     *title: text
     *description: text
+    *image: binary
     *topic: TopicEnum
     *difficulty: DifficultyEnum
 }
