@@ -7,7 +7,6 @@ entity "User" as user {
     --
     *username: text
     *email: text
-    *passwordHash: text
     *role: RoleEnum
 }
 
@@ -19,21 +18,21 @@ entity "Questions" as questions {
     *difficulty: DifficultyEnum
     *topic: [text]
     *examples: [text]
-    createdAt: datetime
-    updatedAt: datetime
+    time_created: datetime
+    time_updated: datetime
 }
 
 entity "Session" as session {
     *session_id: number <<generated>>
     --
     *question_id: number (FK → Questions)
-    *startedAt: datetime
-    *endedAt: datetime
+    *start_time: datetime
+    *end_time: datetime
     *status: StatusEnum
 }
 
-entity "Session Participants" as participants {
-    *id: number <<generated>>
+entity "Session History" as history {
+    *history_id: number <<generated>>
     --
     *session_id: number (FK → Session)
     *user_id: number (FK → User)
@@ -57,8 +56,8 @@ enum RoleEnum {
     Admin
 }
 
-user::_id ||--o{ participants::user_id
-session::_id ||--o{ participants::session_id
+user::_id ||--o{ history::user_id
+session::_id ||--o{ history::session_id
 questions::_id ||--o{ session::question_id
 
 ' Link fields to enums
