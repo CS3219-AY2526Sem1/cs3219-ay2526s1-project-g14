@@ -1,4 +1,4 @@
-@startuml
+@startuml Database structure
 
 ' avoid problems with angled crows feet
 
@@ -8,28 +8,35 @@ entity "User" as user {
     *username: text
     *email: text
     *passwordHash: text
-    topic: text
-    difficulty: text
+    *role: RoleEnum
 }
 
 entity "Questions" as questions {
-    *question_id: number <<generated>>
+    *question_id: number
     --
     *title: text
     *description: text
-    *image: binary
-    *topic: TopicEnum
     *difficulty: DifficultyEnum
+    *topic: [text]
+    *examples: [text]
+    createdAt: datetime
+    updatedAt: datetime
 }
 
-entity "User Question History" as history {
-    *history_id: number <<generated>>
+entity "Session" as session {
+    *session_id: number <<generated>>
     --
-    *participants: [user_id] (FK)
-    *question_id: number (FK)
-    *status: StatusEnum
+    *question_id: number (FK → Questions)
     *startedAt: datetime
     *endedAt: datetime
+    *status: StatusEnum
+}
+
+entity "Session Participants" as participants {
+    *id: number <<generated>>
+    --
+    *session_id: number (FK → Session)
+    *user_id: number (FK → User)
 }
 
 ' Enums
@@ -39,26 +46,25 @@ enum DifficultyEnum {
     Hard
 }
 
-enum TopicEnum {
-    Arrays
-    Graphs
-    Algorithms
-    Database
-}
-
 enum StatusEnum {
     Not started
     In progress
     Completed
 }
 
-user::user_id ||--o{ history::participants
-questions::question_id ||--o{ history::question_id
+enum RoleEnum {
+    Student
+    Admin
+}
+
+user::_id ||--o{ participants::user_id
+session::_id ||--o{ participants::session_id
+questions::_id ||--o{ session::question_id
 
 ' Link fields to enums
+user::role -- RoleEnum
 questions::difficulty -- DifficultyEnum
-questions::topic -- TopicEnum
-history::status -- StatusEnum
+session::status -- StatusEnum
 
 legend right
     == Legend ==
