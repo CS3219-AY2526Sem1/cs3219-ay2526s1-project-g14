@@ -1,5 +1,5 @@
 import {
-    USERNAME
+    API
 } from '../constants/api'
 import {
     axiosInstance
@@ -7,7 +7,7 @@ import {
 
 export const saveUsername = async (username) => {
     try {
-        const { status } = await axiosInstance.post(USERNAME, {
+        const { status } = await axiosInstance.post(API.USER, {
             username: username,
         });
         if (status == 201) return true;
