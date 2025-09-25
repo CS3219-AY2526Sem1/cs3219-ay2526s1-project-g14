@@ -7,11 +7,11 @@ const Home = () => {
     const username = useSelector(state => state.user.username);
     const navigate = useNavigate();
 
-    useEffect(() => {
-        if (username=="") {
-            navigate("/login");
-        }
-    })
+    // useEffect(() => {
+    //     if (username=="") {
+    //         navigate("/login");
+    //     }
+    // })
     return (
         <div>
             Hello {username}!
