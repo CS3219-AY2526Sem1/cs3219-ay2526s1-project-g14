@@ -1,4 +1,3 @@
-import logo from './logo.svg';
 import './App.css';
 import {
   BrowserRouter as Router,
@@ -8,6 +7,7 @@ import {
 
 import Home from "./views/home";
 import Login from "./views/login";
+import QuestionsPage from './views/questions';
 
 function App() {
   return (
@@ -15,6 +15,7 @@ function App() {
       <Routes>
         <Route path="" element={<Home />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/questions" element={<QuestionsPage/>} />
       </Routes>
     </Router>
   );

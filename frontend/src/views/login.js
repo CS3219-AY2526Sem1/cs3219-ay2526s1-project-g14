@@ -2,7 +2,7 @@ import { useDispatch } from 'react-redux'
 import { useNavigate } from 'react-router-dom';
 import { Button, TextField } from '@mui/material';
 import { handleSaveUsername } from "../store/actions/user"
-import logo from '../logo.svg';
+import logo from '../logo.png'
 import '../App.css';
 import { useState } from 'react';
 
@@ -41,14 +41,6 @@ const Login = () => {
                 >
                     Submit
                 </Button>
-                <a
-                    className="App-link"
-                    href="https://reactjs.org"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    Learn React
-                </a>
             </header>
         </div>
     );
