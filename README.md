@@ -21,4 +21,21 @@
     npm start
     ```
 
-#### Backend
+#### Database
+1. Switch to `backend` directory.
+    ```
+    cd backend
+    ```
+2. Install dependencies.
+    ```
+    npm install
+    ```
+3. Start the server.
+    ```
+    node server.js
+    ```
+4. You should see the message below if the connection is successful.
+    ```
+    Server is running on port 5000
+    MongoDB connected
+    ```
