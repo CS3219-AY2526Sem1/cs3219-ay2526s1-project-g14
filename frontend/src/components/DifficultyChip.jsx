@@ -1,9 +1,9 @@
 import { Chip } from "@mui/material";
 
 const difficultyColors = {
-  Easy: "success",   
-  Medium: "warning",
-  Hard: "error",
+    Easy: "success",   
+    Medium: "warning",
+    Hard: "error",
 };
 
 export default function DifficultyChip({ difficulty }) {
