@@ -13,8 +13,53 @@ const _config = {
 
 const env = "development";
 
-export const axiosInstance = axios.create({
+const axiosInstance = axios.create({
     timeout: _config[env].timeout,
     headers: {},
     baseURL: _config[env].baseURL,
 });
+
+const forceToLogin = () => {
+    window.localStorage.removeItem("state");
+    window.location.href="/login"
+}
+
+const forceToLogout = () => {
+    window.localStorage.removeItem("state");
+    window.location.href="/"
+}
+
+axiosInstance.interceptors.request.use(
+    async config => {
+        const state = JSON.parse(localStorage.getItem("state"))
+        let token = "";
+        if (state != undefined) {
+            token = state.user.token;
+        }
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    },
+    err => {
+        return Promise.reject(err);
+    }
+);
+
+axiosInstance.interceptors.response.use(
+    response =>
+        Promise.resolve(response),
+    async err => {
+        const originalRequest = err.config;
+        if (err?.response.status === 403) {
+            forceToLogin();
+        }
+        if (err?.response.status === 401 && originalRequest._retry) {
+            console.log("Token have expired!")
+            forceToLogout();
+        }
+        return Promise.reject(err);
+    }
+);
+
+export default axiosInstance;

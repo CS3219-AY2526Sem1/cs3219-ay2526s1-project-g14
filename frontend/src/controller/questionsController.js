@@ -1,5 +1,5 @@
 import { API } from '../constants/api';
-import { axiosInstance } from '../config/axios';
+import axiosInstance from '../config/axios';
 
 export const fetchQuestions = async(topic="", difficulty="") => {
     const params = {}
