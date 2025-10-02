@@ -20,7 +20,7 @@ exports.getTopics = async (req, res) => {
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
-} 
+}
 
 exports.getRandomQuestion = async (req, res) => {
     try {
@@ -31,12 +31,12 @@ exports.getRandomQuestion = async (req, res) => {
         if (difficulty) match.difficulty = difficulty;
 
         const randomQuestion = await Question.aggregate([
-        { $match: match },
-        { $sample: { size: 1 } },
+            { $match: match },
+            { $sample: { size: 1 } },
         ]);
 
         if (randomQuestion.length === 0) {
-        return res.status(404).json({ success: false, message: "No questions found." });
+            return res.status(404).json({ success: false, message: "No questions found." });
         }
 
         res.status(200).json({ success: true, payload: randomQuestion[0] });
