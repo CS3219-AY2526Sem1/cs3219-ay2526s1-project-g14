@@ -1,9 +1,7 @@
 import {
     API
 } from '../constants/api'
-import {
-    axiosInstance
-} from "../config/axios"
+import axiosInstance from "../config/axios"
 
 export const saveUsername = async (username) => {
     try {
