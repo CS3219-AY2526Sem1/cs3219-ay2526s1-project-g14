@@ -3,25 +3,40 @@ import {
   BrowserRouter as Router,
   Routes,
   Route,
-  useLocation
+  useLocation,
+  useNavigate
 } from "react-router-dom";
+import { useSelector } from "react-redux";
+
+import { PAGES } from "./constants/pages"
 import NavigationBar from './components/NavigationBar';
 import Home from "./views/home";
-import Login from "./views/login";
+import Auth from "./views/Auth";
 import QuestionsPage from './views/questions-page';
+import { useEffect } from 'react';
 
 function AppContent() {
-  const location = useLocation();
+  const navigate = useNavigate();
+  const { username } = useSelector((state) => state.auth);
+  
+  const checkAuthenticated = () => {
+    if (username == null) {
+      navigate(PAGES.LOGIN)
+    }
+  }
+
+  useEffect(() => {
+    checkAuthenticated()
+  })
 
   return (
     <>
-      {location.pathname !== "/login" && (
-        <NavigationBar />
-      )}
+      <NavigationBar />
 
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
+        <Route path={PAGES.HOME} element={<Home />} />
+        <Route path={PAGES.LOGIN} element={<Auth />} />
+        <Route path={PAGES.REGISTER} element={<Auth />} />
         <Route path="/questions" element={<QuestionsPage />} />
       </Routes>
     </>
