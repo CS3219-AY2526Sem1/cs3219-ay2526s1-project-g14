@@ -1,6 +1,4 @@
-// const Question = require("../model/questionModel.js");
-// Using mock data instead of MongoDB
-const { Question } = require('../mockData');
+const Question = require("../model/questionModel.js");
 
 exports.getQuestions = async (req, res) => {
     try {

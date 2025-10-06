@@ -1,14 +1,12 @@
 require('dotenv').config();
 const app = require('./app');
-// const connectDB = require('./config/db'); // Commented out for mock data
-const { initializeMockData } = require('./mockData');
+const connectDB = require('./config/db');
 const socketService = require('./services/socketService');
 const http = require('http');
 
 const PORT = process.env.PORT || 5000;
-// connectDB();
-// Initialize mock data instead of MongoDB
-initializeMockData();
+connectDB();
+console.log("MongoDB connected")
 
 // Create HTTP server
 const server = http.createServer(app);

@@ -72,24 +72,6 @@ const User = require('./model/user'); // Your actual user model
 const user = await User.findById(userId);
 ```
 
-### 3. **Question Service Integration**
-
-**Current Mock**: `backend/mockData.js` - mockQuestions
-**Replace With**: Your question database/service
-
-```javascript
-// CURRENT MOCK DATA
-mockQuestions.set('q1', {
-    _id: 'q1',
-    questionId: 1,
-    title: 'Two Sum',
-    description: 'Given an array of integers...',
-    difficulty: 'Easy',
-    topic: ['Arrays', 'Hash Table'],
-    examples: [...]
-});
-```
-
 ### 4. **Session Model Integration**
 
 **Current Mock**: `backend/mockData.js` - mockSessions  
@@ -523,13 +505,6 @@ socket.on('match-found', (data) => {
 - [ ] Provide user authentication tokens
 - [ ] Handle user profile data (username, email, etc.)
 
-### **Question Service**
-- [ ] Replace `mockQuestions` in `mockData.js` with your question model
-- [ ] Ensure question data includes all required fields:
-  - `questionId`, `title`, `description`, `difficulty`, `topic`, `examples`
-- [ ] Provide question images/diagrams if available
-- [ ] Handle question filtering by topic/difficulty
-
 ### **frontend**
 - [ ] Remove authentication bypass in `App.js`
 - [ ] Integrate with your authentication system
@@ -539,10 +514,8 @@ socket.on('match-found', (data) => {
 
 ### **other stuff**
 - [ ] Set up environment variables:
-  - `MONGODB_CONNECTION` (if using MongoDB)
   - `JWT_SECRET` and `JWT_EXPIRE`
   - `FRONTEND_URL` for CORS
-  - `PORT` for backend service
 - [ ] Configure WebSocket connections
 - [ ] Set up service-to-service communication
 - [ ] Handle scaling for multiple collaboration sessions

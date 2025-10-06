@@ -3,7 +3,6 @@
 
 // In-memory data stores
 const mockUsers = new Map();
-const mockQuestions = new Map();
 const mockSessions = new Map();
 const mockMatchingQueue = [];
 
@@ -30,109 +29,6 @@ function initializeMockData() {
         username: 'Charlie',
         email: 'charlie@test.com'
     });
-
-    // Sample Questions
-    mockQuestions.set('q1', {
-        _id: 'q1',
-        questionId: 1,
-        title: 'Two Sum',
-        description: 'Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.\n\nYou may assume that each input would have exactly one solution, and you may not use the same element twice.\n\nYou can return the answer in any order.',
-        difficulty: 'Easy',
-        topic: ['Arrays', 'Hash Table'],
-        examples: [
-            {
-                input: 'nums = [2,7,11,15], target = 9',
-                output: '[0,1]'
-            },
-            {
-                input: 'nums = [3,2,4], target = 6', 
-                output: '[1,2]'
-            }
-        ],
-        image: null
-    });
-
-    mockQuestions.set('q2', {
-        _id: 'q2',
-        questionId: 2,
-        title: 'Add Two Numbers',
-        description: 'You are given two non-empty linked lists representing two non-negative integers. The digits are stored in reverse order, and each of their nodes contains a single digit. Add the two numbers and return the sum as a linked list.',
-        difficulty: 'Medium',
-        topic: ['Linked List', 'Math'],
-        examples: [
-            {
-                input: 'l1 = [2,4,3], l2 = [5,6,4]',
-                output: '[7,0,8]'
-            }
-        ],
-        image: null
-    });
-
-    mockQuestions.set('q3', {
-        _id: 'q3',
-        questionId: 3,
-        title: 'Longest Substring Without Repeating Characters',
-        description: 'Given a string s, find the length of the longest substring without repeating characters.',
-        difficulty: 'Medium',
-        topic: ['Hash Table', 'String', 'Sliding Window'],
-        examples: [
-            {
-                input: 's = "abcabcbb"',
-                output: '3'
-            },
-            {
-                input: 's = "bbbbb"',
-                output: '1'
-            }
-        ],
-        image: null
-    });
-
-    mockQuestions.set('q4', {
-        _id: 'q4',
-        questionId: 4,
-        title: 'Median of Two Sorted Arrays',
-        description: 'Given two sorted arrays nums1 and nums2 of size m and n respectively, return the median of the two sorted arrays.',
-        difficulty: 'Hard',
-        topic: ['Array', 'Binary Search', 'Divide and Conquer'],
-        examples: [
-            {
-                input: 'nums1 = [1,3], nums2 = [2]',
-                output: '2.00000'
-            }
-        ],
-        image: null
-    });
-
-    mockQuestions.set('q5', {
-        _id: 'q5',
-        questionId: 5,
-        title: 'Valid Parentheses',
-        description: 'Given a string s containing just the characters \'(\', \')\', \'{\', \'}\', \'[\' and \']\', determine if the input string is valid.',
-        difficulty: 'Easy',
-        topic: ['String', 'Stack'],
-        examples: [
-            {
-                input: 's = "()"',
-                output: 'true'
-            },
-            {
-                input: 's = "()[]{}"',
-                output: 'true'
-            },
-            {
-                input: 's = "(]"',
-                output: 'false'
-            }
-        ],
-        image: null
-    });
-
-    console.log('📊 Mock data initialized:', {
-        users: mockUsers.size,
-        questions: mockQuestions.size,
-        sessions: mockSessions.size
-    });
 }
 
 // Mock User Model
@@ -152,65 +48,6 @@ const MockUser = {
     }
 };
 
-// Mock Question Model
-const MockQuestion = {
-    find: (filter = {}) => {
-        let questions = Array.from(mockQuestions.values());
-        
-        if (filter.topic && filter.topic.$in) {
-            const topicRegex = filter.topic.$in[0];
-            questions = questions.filter(q => 
-                q.topic.some(t => topicRegex.test(t))
-            );
-        }
-        
-        if (filter.difficulty) {
-            questions = questions.filter(q => q.difficulty === filter.difficulty);
-        }
-        
-        return questions;
-    },
-    
-    findById: (id) => mockQuestions.get(id) || null,
-    
-    distinct: (field) => {
-        if (field === 'topic') {
-            const allTopics = new Set();
-            mockQuestions.forEach(q => {
-                q.topic.forEach(t => allTopics.add(t));
-            });
-            return Array.from(allTopics);
-        }
-        return [];
-    },
-    
-    aggregate: (pipeline) => {
-        let questions = Array.from(mockQuestions.values());
-        
-        pipeline.forEach(stage => {
-            if (stage.$match) {
-                const match = stage.$match;
-                if (match.difficulty) {
-                    questions = questions.filter(q => q.difficulty === match.difficulty);
-                }
-                if (match.topic && match.topic.$in) {
-                    const topicRegex = match.topic.$in[0];
-                    questions = questions.filter(q => 
-                        q.topic.some(t => topicRegex.test(t))
-                    );
-                }
-            }
-            
-            if (stage.$sample) {
-                const size = stage.$sample.size;
-                questions = questions.sort(() => 0.5 - Math.random()).slice(0, size);
-            }
-        });
-        
-        return questions;
-    }
-};
-
 // Mock Session Model
 const MockSession = {
     findOne: (filter) => {
@@ -226,9 +63,9 @@ const MockSession = {
                     populate: (field, select) => {
                         let populatedSession = { ...session };
                         
-                        if (field === 'questionId') {
-                            populatedSession.questionId = mockQuestions.get(session.questionId);
-                        }
+                        // if (field === 'questionId') {
+                        //     populatedSession.questionId = mockQuestions.get(session.questionId);
+                        // }
                         
                         // Return another populate chain for chaining
                         return {
@@ -255,9 +92,9 @@ const MockSession = {
                         ...session,
                         populate: (field) => {
                             let populatedSession = { ...session };
-                            if (field === 'questionId') {
-                                populatedSession.questionId = mockQuestions.get(session.questionId);
-                            }
+                            // if (field === 'questionId') {
+                            //     populatedSession.questionId = mockQuestions.get(session.questionId);
+                            // }
                             return populatedSession;
                         }
                     };
@@ -310,26 +147,22 @@ module.exports = {
     
     // Mock models (drop-in replacements)
     User: MockUser,
-    Question: MockQuestion,
     Session: MockSession,
     
     // Direct access to data stores (for debugging)
     mockUsers,
-    mockQuestions,
     mockSessions,
     mockMatchingQueue,
     
     // Utility functions
     clearAllData: () => {
         mockUsers.clear();
-        mockQuestions.clear();
         mockSessions.clear();
         mockMatchingQueue.length = 0;
     },
     
     getStats: () => ({
         users: mockUsers.size,
-        questions: mockQuestions.size,
         sessions: mockSessions.size,
         queueLength: mockMatchingQueue.length
     })
