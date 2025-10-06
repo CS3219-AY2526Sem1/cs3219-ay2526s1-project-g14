@@ -1,6 +1,6 @@
 import { Box, FormControl, InputLabel, Select, MenuItem, OutlinedInput } from "@mui/material";
 
-export default function Filters({ topics, selectedTopic, setSelectedTopic, selectedDifficulty, setSelectedDifficulty }) {
+export default function Filters({ topics, selectedTopic, setSelectedTopic, selectedDifficulty, setSelectedDifficulty, disabled = false }) {
     return (
         <Box display="flex" gap={2} mb={3} flexWrap="wrap">
             <FormControl sx={{ minWidth: 160 }}>
@@ -9,6 +9,7 @@ export default function Filters({ topics, selectedTopic, setSelectedTopic, selec
                     value={selectedTopic}
                     onChange={(e) => setSelectedTopic(e.target.value)}
                     input={<OutlinedInput label="Topic" />}
+                    disabled={disabled}
                     sx={{
                         "& .MuiOutlinedInput-notchedOutline": { borderColor: "#0091f3" },
                         "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#0077c2" },
@@ -30,6 +31,7 @@ export default function Filters({ topics, selectedTopic, setSelectedTopic, selec
                     value={selectedDifficulty}
                     onChange={(e) => setSelectedDifficulty(e.target.value)}
                     input={<OutlinedInput label="Difficulty" />}
+                    disabled={disabled}
                     sx={{
                         "& .MuiOutlinedInput-notchedOutline": { borderColor: "#0091f3" },
                         "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#0077c2" },
