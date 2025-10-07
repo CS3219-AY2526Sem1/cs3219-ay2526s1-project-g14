@@ -2,51 +2,8 @@
 // This file contains all mock data and CRUD operations
 
 // In-memory data stores
-const mockUsers = new Map();
 const mockSessions = new Map();
 const mockMatchingQueue = [];
-
-// Initialize with sample data
-function initializeMockData() {
-    // Sample Users with emails
-    mockUsers.set('user123', {
-        _id: 'user123',
-        userId: 'user123',
-        username: 'Alice',
-        email: 'alice@test.com'
-    });
-    
-    mockUsers.set('user456', {
-        _id: 'user456', 
-        userId: 'user456',
-        username: 'Bob',
-        email: 'bob@test.com'
-    });
-
-    mockUsers.set('user789', {
-        _id: 'user789',
-        userId: 'user789', 
-        username: 'Charlie',
-        email: 'charlie@test.com'
-    });
-}
-
-// Mock User Model
-const MockUser = {
-    find: () => Array.from(mockUsers.values()),
-    findById: (id) => mockUsers.get(id) || null,
-    create: (userData) => {
-        const user = {
-            _id: userData.userId || Date.now().toString(),
-            userId: userData.userId || Date.now().toString(),
-            username: userData.username,
-            createdAt: new Date(),
-            updatedAt: new Date()
-        };
-        mockUsers.set(user.userId, user);
-        return user;
-    }
-};
 
 // Mock Session Model
 const MockSession = {
@@ -142,27 +99,20 @@ const MockSession = {
 
 // Export everything
 module.exports = {
-    // Initialize function
-    initializeMockData,
-    
     // Mock models (drop-in replacements)
-    User: MockUser,
     Session: MockSession,
     
     // Direct access to data stores (for debugging)
-    mockUsers,
     mockSessions,
     mockMatchingQueue,
     
     // Utility functions
     clearAllData: () => {
-        mockUsers.clear();
         mockSessions.clear();
         mockMatchingQueue.length = 0;
     },
     
     getStats: () => ({
-        users: mockUsers.size,
         sessions: mockSessions.size,
         queueLength: mockMatchingQueue.length
     })

@@ -2,7 +2,7 @@
 // In production, this would be a separate microservice
 
 const axios = require('axios');
-const { mockUsers, mockMatchingQueue } = require('../mockData');
+const { mockMatchingQueue } = require('../mockData');
 
 // Get socket service to notify users
 let socketService = null;
@@ -11,8 +11,6 @@ try {
 } catch (e) {
     console.log('Socket service not available for notifications');
 }
-
-// Use the centralized mock data
 
 // Join matching queue (mock implementation)
 exports.joinMatchingQueue = async (req, res) => {
@@ -202,25 +200,5 @@ exports.getQueueStatus = async (req, res) => {
             queueLength: mockMatchingQueue.length,
             queue: mockMatchingQueue
         }
-    });
-};
-
-// Create mock users (for testing)
-exports.createMockUser = async (req, res) => {
-    const { userId, username } = req.body;
-    
-    if (!userId || !username) {
-        return res.status(400).json({ 
-            success: false, 
-            error: 'Missing userId or username' 
-        });
-    }
-
-    const user = { userId, username };
-    mockUsers.set(userId, user);
-    
-    res.status(201).json({
-        success: true,
-        payload: user
     });
 };

@@ -10,6 +10,7 @@ export const SET_USER_INFO = "SET_USER_INFO";
 
 
 export const handleUserAuthenticated = (data) => async (dispatch) => {
+  localStorage.setItem("token", data.token); // persist token
   dispatch({
     type: SET_USER_INFO,
     username: data.user.username,

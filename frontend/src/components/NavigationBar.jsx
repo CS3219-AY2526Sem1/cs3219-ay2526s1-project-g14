@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useState, useEffect } from "react";
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import Typography from "@mui/material/Typography";
@@ -12,42 +12,42 @@ const NavigationBar = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const location = useLocation();
-    const [currentUser, setCurrentUser] = useState(null);
+    const username = useSelector((state) => state.auth.username);
 
     // Get user from localStorage (set by UserSelector) or sessionStorage
-    useEffect(() => {
-        const getUserData = () => {
-            // First try sessionStorage (UserSelector)
-            const sessionUser = sessionStorage.getItem('currentUser');
-            if (sessionUser) {
-                setCurrentUser(JSON.parse(sessionUser));
-                return;
-            }
+    // useEffect(() => {
+    //     const getUserData = () => {
+    //         // First try sessionStorage (UserSelector)
+    //         const sessionUser = sessionStorage.getItem('currentUser');
+    //         if (sessionUser) {
+    //             setCurrentUser(JSON.parse(sessionUser));
+    //             return;
+    //         }
             
-            // Then try localStorage (auth bypass)
-            const authState = localStorage.getItem('state');
-            if (authState) {
-                const userData = JSON.parse(authState);
-                setCurrentUser({
-                    username: userData.user?.username || 'User'
-                });
-            }
-        };
+    //         // Then try localStorage (auth bypass)
+    //         const authState = localStorage.getItem('state');
+    //         if (authState) {
+    //             const userData = JSON.parse(authState);
+    //             setCurrentUser({
+    //                 username: userData.user?.username || 'User'
+    //             });
+    //         }
+    //     };
 
-        getUserData();
+    //     getUserData();
         
-        // Listen for storage changes (when user switches)
-        const handleStorageChange = () => getUserData();
-        window.addEventListener('storage', handleStorageChange);
+    //     // Listen for storage changes (when user switches)
+    //     const handleStorageChange = () => getUserData();
+    //     window.addEventListener('storage', handleStorageChange);
         
-        // Also check periodically for sessionStorage changes
-        const interval = setInterval(getUserData, 1000);
+    //     // Also check periodically for sessionStorage changes
+    //     const interval = setInterval(getUserData, 1000);
         
-        return () => {
-            window.removeEventListener('storage', handleStorageChange);
-            clearInterval(interval);
-        };
-    }, []);
+    //     return () => {
+    //         window.removeEventListener('storage', handleStorageChange);
+    //         clearInterval(interval);
+    //     };
+    // }, []);
 
     const onLogout = () => {
         dispatch(handleLogout());
@@ -107,7 +107,7 @@ const NavigationBar = () => {
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <AccountCircleIcon sx={{ fontSize: 32, color: "#0091f3" }} />
                     <Typography sx={{ color: "#0091f3", fontWeight: "bold" }}>
-                        {currentUser?.username || 'User'}
+                        {username || 'User'}
                     </Typography>
                 </Box>
                 <Button
