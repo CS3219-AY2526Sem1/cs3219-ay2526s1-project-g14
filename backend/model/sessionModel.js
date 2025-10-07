@@ -11,11 +11,7 @@ const sessionSchema = new mongoose.Schema({
         type: [{
             userId: {
                 type: mongoose.Schema.Types.ObjectId,
-                ref: 'user',
-                required: true
-            },
-            username: {
-                type: String,
+                ref: 'User',
                 required: true
             },
             joinedAt: {
@@ -35,15 +31,6 @@ const sessionSchema = new mongoose.Schema({
         ref: 'question',
         required: true
     },
-    difficulty: {
-        type: String,
-        enum: ["Easy", "Medium", "Hard"],
-        required: true
-    },
-    topic: {
-        type: String,
-        required: true
-    },
     status: {
         type: String,
         enum: ["active", "in_progress", "completed", "cancelled"],
@@ -55,36 +42,16 @@ const sessionSchema = new mongoose.Schema({
     },
     language: {
         type: String,
+        enum: ["javascript", "python", "java", "c++"],
         default: "javascript"
     },
     startTime: {
-        type: Date
+        type: Date,
+        default: Date.now
     },
     endTime: {
         type: Date
     },
-    chatHistory: [{
-        userId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'user'
-        },
-        username: String,
-        message: String,
-        timestamp: {
-            type: Date,
-            default: Date.now
-        }
-    }],
-    questionMetadata: {
-        title: String,
-        description: String,
-        examples: [{
-            input: String,
-            output: String
-        }],
-        image: String,
-        topics: [String]
-    }
 }, { 
     timestamps: true, 
     collection: 'sessions' 
@@ -92,6 +59,6 @@ const sessionSchema = new mongoose.Schema({
 
 // Index for efficient matching queries
 sessionSchema.index({ status: 1, difficulty: 1, topic: 1 });
-sessionSchema.index({ participants: 1 });
+sessionSchema.index({ "participants.userId": 1, status: 1 }); // find sessions by participant
 
 module.exports = mongoose.model("Session", sessionSchema);

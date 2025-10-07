@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
 import { Box, Paper, Typography, Button, Alert, CircularProgress } from "@mui/material";
 import Filters from "../Filters";
 import { fetchOneQuestion } from "../../controller/questionsController";
@@ -12,31 +13,31 @@ export default function MatchingBox({
     setSelectedTopic,
     selectedDifficulty,
     setSelectedDifficulty,
-    currentUser,
+    username,
 }) {
+    const userId = useSelector((state) => state.auth.id);
+
     const [question, setQuestion] = useState(null);
     const [loading, setLoading] = useState(false);
     const [matchingStatus, setMatchingStatus] = useState(null); // 'waiting', 'matched', null
     const [error, setError] = useState(null);
     const navigate = useNavigate();
     
-    // currentUser is now passed as prop from parent component
-
     useEffect(() => {
         // Initialize socket connection
         collaborationService.initializeSocket();
 
         // Listen for match found
         collaborationService.onMatchFound((data) => {
-            console.log('🎯 MatchingBox received match-found event for user:', currentUser?.username, currentUser?.userId);
+            console.log('🎯 MatchingBox received match-found event for user:', username, userId);
             console.log('🎯 Match data:', data);
             
             // Check if this match is for the current user
-            const isForCurrentUser = data.users && currentUser?.userId && data.users.some(user => user.userId === currentUser.userId);
+            const isForCurrentUser = data.users && userId && data.users.some(user => user.userId === userId);
             console.log('🎯 Is this match for current user?', isForCurrentUser);
             
             if (isForCurrentUser) {
-                console.log('✅ Match confirmed for user:', currentUser.username);
+                console.log('✅ Match confirmed for user:', username);
                 setMatchingStatus('matched');
                 setLoading(false);
                 setError(null); // Clear any previous errors
@@ -48,21 +49,21 @@ export default function MatchingBox({
                 }, 2000);
             } else {
                 console.log('❌ Match not for current user, ignoring');
-                console.log('❌ Current user ID:', currentUser?.userId);
+                console.log('❌ Current user ID:', userId);
                 console.log('❌ Match user IDs:', data.users?.map(u => u.userId));
             }
         });
 
         return () => {
             // Cleanup on unmount
-            if (matchingStatus === 'waiting' && currentUser?.userId) {
-                collaborationService.leaveQueue(currentUser.userId).catch(error => {
+            if (matchingStatus === 'waiting' && userId) {
+                collaborationService.leaveQueue(userId).catch(error => {
                     // Ignore "user not found in queue" errors - this is normal when user was already matched
                     console.log('Queue cleanup:', error.message);
                 });
             }
         };
-    }, [matchingStatus, navigate, currentUser?.userId]);
+    }, [matchingStatus, navigate, userId]);
     
     const handleStartMatching = async () => {
         if (!selectedTopic || !selectedDifficulty) {
@@ -70,19 +71,19 @@ export default function MatchingBox({
             return;
         }
 
-        if (!currentUser || !currentUser.userId) {
+        if (username || userId) {
             setError('Please select a user first');
             return;
         }
 
-        console.log('🚀 Starting match with user:', currentUser);
+        console.log('🚀 Starting match with user:', username);
         setLoading(true);
         setError(null);
         
         try {
             const result = await collaborationService.joinQueue(
-                currentUser.userId,
-                currentUser.username,
+                userId,
+                username,
                 selectedDifficulty,
                 selectedTopic
             );
@@ -106,14 +107,14 @@ export default function MatchingBox({
 
     const handleCancelMatching = async () => {
         console.log('Cancel matching clicked');
-        if (!currentUser?.userId) {
-            console.error('No currentUser.userId available');
+        if (userId) {
+            console.error('No userId available');
             return;
         }
         
         try {
-            console.log(' Leaving queue for user:', currentUser.userId);
-            await collaborationService.leaveQueue(currentUser.userId);
+            console.log(' Leaving queue for user:', userId);
+            await collaborationService.leaveQueue(userId);
             setMatchingStatus(null);
             setLoading(false);
             setError(null);
@@ -125,20 +126,46 @@ export default function MatchingBox({
     };
 
     const handlePracticeAlone = async () => {
+        if (!selectedTopic || !selectedDifficulty) {
+            setError('Select a topic and difficulty first');
+            return;
+        }
+
         setLoading(true);
+        setError(null);
+
         try {
+            // Fetch a random question for the selected topic & difficulty
             const question = await fetchOneQuestion(selectedTopic, selectedDifficulty);
-            setQuestion(question);
+
+            if (!question) {
+                setError('No question found');
+                return;
+            }
+
+            // Create a session directly with the current user only
+            // For now, just use the current user as the only participant
+            const payload = {
+                users: [
+                    { userId: userId, username: username },
+                    { userId: "68e3aa7f194289b0adf5ecaf", username: "rach" }
+                ],
+                difficulty: selectedDifficulty,
+                topic: selectedTopic,
+                questionData: question 
+            };
+            const sessionResponse = await collaborationService.createSession(payload);
+            console.log('Session created:', sessionResponse.payload.sessionId);
+            navigate(`/collaboration/${sessionResponse.payload.sessionId}`);
         } catch (err) {
             console.error(err);
-            setQuestion(null);
-            setError('Failed to fetch question');
+            setError(err.message || 'Failed to create session');
         } finally {
             setLoading(false);
         }
     };
 
-  return (
+    return (
         <Paper sx={{ flex: 1, p: 3, minWidth: 280, border: "1px solid #0091f3", borderRadius: 2 }}>
         <Typography variant="h6" sx={{ fontWeight: "bold", color: "#0091f3", mb: 2 }}>
             {matchingStatus === 'waiting' ? 'Finding Partner...' : 

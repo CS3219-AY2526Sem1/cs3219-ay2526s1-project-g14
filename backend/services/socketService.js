@@ -1,6 +1,5 @@
 const { Server } = require('socket.io');
-// Using mock data instead of MongoDB
-const { Session } = require('../mockData');
+const Session = require('../model/sessionModel');
 
 class SocketService {
     constructor() {
@@ -210,7 +209,7 @@ class SocketService {
     // Method to notify matched users
     notifyMatch(sessionId, participants) {
         participants.forEach(participant => {
-            this.io.emit('match-found', {
+            this.io.to(participant.userId.toString()).emit('match-found', {
                 sessionId,
                 partner: participants.find(p => p.userId !== participant.userId)
             });

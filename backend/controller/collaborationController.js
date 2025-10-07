@@ -1,10 +1,12 @@
-// Using mock data instead of MongoDB
-const { Session, Question, User } = require('../mockData');
+const Session = require("../model/sessionModel")
+const Question = require("../model/questionModel");
+const User = require("../model/user");
+const socketService = require("../services/socketService");
 
 // Create collaboration session (called by external matching service)
 exports.createSession = async (req, res) => {
     try {
-        const { users, difficulty, topic, questionData } = req.body;
+        const { users, difficulty, topic, questionData } = req.body; 
 
         // Validate required fields
         if (!users || !Array.isArray(users) || users.length !== 2) {
@@ -14,34 +16,32 @@ exports.createSession = async (req, res) => {
             });
         }
 
-        // Validate users have required fields
-        for (const user of users) {
-            if (!user.userId || !user.username) {
-                return res.status(400).json({ 
-                    success: false, 
-                    error: 'Each user must have userId and username' 
+        // Validate that users exist in DB
+        const participants = [];
+        for (const u of users) {
+            const userDoc = await User.findById(u.userId);
+            if (!userDoc) {
+                return res.status(404).json({
+                success: false,
+                error: `User with ID ${u.userId} not found`,
                 });
             }
+            participants.push({
+                userId: userDoc._id,
+                joinedAt: new Date(),
+            });
         }
 
         // Get question (priority: questionData > database lookup > random selection)
         let question;
         
-        if (questionData) {
-            // Use provided question data directly (from matching service)
-            question = questionData;
-            
-            // If questionData has an ID but no other fields, try to fetch from database
-            if (questionData.questionId && !questionData.title && !questionData.description) {
-                try {
-                    const dbQuestion = await Question.findById(questionData.questionId);
-                    if (dbQuestion) {
-                        // Merge database question with any provided metadata
-                        question = { ...dbQuestion.toObject(), ...questionData };
-                    }
-                } catch (err) {
-                    console.warn('Could not fetch question from database:', err.message);
-                }
+        if (questionData?.questionId) {
+            question = await Question.findOne({ questionId: questionData.questionId });
+            if (!question) {
+                return res.status(404).json({
+                success: false,
+                error: `Question with ID ${questionData.questionId} not found`,
+                });
             }
         } else if (difficulty && topic) {
             // Find random question matching criteria
@@ -64,50 +64,37 @@ exports.createSession = async (req, res) => {
             });
         }
 
-        // Extract metadata from question
-        const sessionDifficulty = difficulty || question.difficulty;
-        const sessionTopic = topic || (Array.isArray(question.topic) ? question.topic[0] : question.topic);
-
         // Create collaboration session
         const session = await Session.create({
-            participants: users.map(user => ({
-                userId: user.userId,
-                username: user.username,
-                joinedAt: new Date()
-            })),
-            questionId: question._id || question.questionId || null,
-            difficulty: sessionDifficulty,
-            topic: sessionTopic,
-            status: 'active',
+            participants,
+            questionId: question._id,
+            status: "active",
+            code: "",
+            language: "javascript",
             startTime: new Date(),
-            // Store question metadata for easy access
-            questionMetadata: {
-                title: question.title,
-                description: question.description,
-                examples: question.examples || [],
-                image: question.image || null,
-                topics: Array.isArray(question.topic) ? question.topic : [question.topic]
-            }
         });
 
-        res.status(201).json({
+        // Emit event via socket.io 
+        socketService.io.emit("sessionCreated", {
+            sessionId: session.sessionId,
+            participants: participants.map((p) => p.userId),
+            topic: topic || question.topic,
+            difficulty: difficulty || question.difficulty,
+            questionTitle: question.title,
+        });
+
+        return res.status(201).json({
             success: true,
             payload: {
                 sessionId: session.sessionId,
-                session: session,
-                question: question,
-                participants: users,
-                metadata: {
-                    hasImage: !!question.image,
-                    exampleCount: question.examples ? question.examples.length : 0,
-                    topics: Array.isArray(question.topic) ? question.topic : [question.topic]
-                }
-            }
+                session,
+                question,
+            },
         });
 
     } catch (error) {
         console.error('Create session error:', error);
-        res.status(500).json({ success: false, error: 'Server Error' });
+        res.status(500).json({ success: false, error: err.message });
     }
 };
 
@@ -159,6 +146,9 @@ exports.updateSessionCode = async (req, res) => {
                 error: 'Session not found' 
             });
         }
+
+        // Emit real-time code update
+        socketService.io.to(sessionId).emit("codeUpdated", { code, language });
 
         res.status(200).json({
             success: true,

@@ -32,7 +32,7 @@ export default function Home() {
                             setSelectedTopic={setSelectedTopic}
                             selectedDifficulty={selectedDifficulty}
                             setSelectedDifficulty={setSelectedDifficulty}
-                            currentUser={username}
+                            username={username}
                         />
                         <RecentQuestions recentQuestions={recentQuestions} loading={loadingRecent} />
                     </Box>

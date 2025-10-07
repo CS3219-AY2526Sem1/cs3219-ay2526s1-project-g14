@@ -56,14 +56,9 @@ class CollaborationService {
     }
 
     // Create collaboration session (microservice API)
-    async createSession(users, difficulty, topic, questionId = null) {
+    async createSession(payload) {
         try {
-            const response = await axios.post('/collaboration/session', {
-                users,
-                difficulty,
-                topic,
-                questionId
-            });
+            const response = await axios.post('/collaboration/session', payload);
             return response.data;
         } catch (error) {
             throw new Error(error.response?.data?.error || 'Failed to create session');

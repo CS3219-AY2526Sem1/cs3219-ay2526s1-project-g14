@@ -4,14 +4,20 @@ const { jwtSecret, jwtExpire } = require("../config/jwt");
 const { transporter } = require("../config/otp");
 
 const authMiddleware = (req, res, next) => {
-    const token = req.header("Authorization")?.replace("Bearer ", "");
-    if (!token) return res.status(401).json({ message: "No token, authorization denied" });
+    const authHeader = req.header("Authorization");
+    const token = authHeader?.replace("Bearer ", "");
+    if (!token) {
+        console.log("No token provided");
+        return res.status(401).json({ message: "No token, authorization denied" });
+    }
 
     try {
         const decoded = jwt.verify(token, jwtSecret);
+        console.log("Token verified:", decoded);
         req.user = decoded;
         next();
     } catch (err) {
+        console.error("JWT error:", err.message);
         res.status(401).json({ message: "Invalid or expired token" });
     }
 };
