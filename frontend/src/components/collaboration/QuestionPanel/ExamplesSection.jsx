@@ -108,7 +108,7 @@ import {
                                 {example.output}
                             </Paper>
                         </Box>
-    ß               </Box>
+                    </Box>
                 </Collapse>
 
                 {index < examples.length - 1}
