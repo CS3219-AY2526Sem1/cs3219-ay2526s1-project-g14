@@ -166,8 +166,8 @@ export default function MatchingBox({
     };
 
     return (
-        <Paper sx={{ flex: 1, p: 3, minWidth: 280, border: "1px solid #0091f3", borderRadius: 2 }}>
-        <Typography variant="h6" sx={{ fontWeight: "bold", color: "#0091f3", mb: 2 }}>
+        <Paper sx={{ flex: 1, p: 3, minWidth: 280, border: "1px solid #EDF2FF", borderRadius: 2 }}>
+        <Typography variant="h6" sx={{ fontWeight: "bold", color: "black", mb: 2 }}>
             {matchingStatus === 'waiting' ? 'Finding Partner...' : 
              matchingStatus === 'matched' ? 'Match Found!' : 'Start Matching'}
         </Typography>
@@ -220,11 +220,11 @@ export default function MatchingBox({
                     <Button
                         variant="contained"
                         sx={{
-                            backgroundColor: "#0091f3",
-                            color: "white",
+                            backgroundColor: "#EDF2FF",
+                            color: "black",
                             textTransform: "none",
                             transition: "0.3s",
-                            "&:hover": { backgroundColor: "#0077c2", transform: "scale(1.05)" },
+                            "&:hover": { backgroundColor: "#D6E0FF", transform: "scale(1.05)" },
                         }}
                         onClick={handleStartMatching}
                         disabled={loading || !selectedTopic || !selectedDifficulty}
@@ -233,13 +233,13 @@ export default function MatchingBox({
                     </Button>
                     
                     <Button
-                        variant="outlined"
+                        variant="contained"
                         sx={{
-                            borderColor: "#0091f3",
-                            color: "#0091f3",
+                            backgroundColor: "#EDF2FF",
+                            color: "black",
                             textTransform: "none",
                             transition: "0.3s",
-                            "&:hover": { backgroundColor: "#f0f8ff" },
+                            "&:hover": { backgroundColor: "#D6E0FF" },
                         }}
                         onClick={handlePracticeAlone}
                         disabled={loading || !selectedTopic || !selectedDifficulty}

@@ -7,11 +7,12 @@ export default function QuestionCard({ question }) {
             p={2}
             borderRadius={2}
             sx={{
-                border: "1px solid #0091f3",
+                backgroundColor: "white",
+                border: "1px solid black",
                 "&:hover": { boxShadow: "0 2px 8px rgba(54, 55, 56, 0.2)" },
             }}
         >
-        <Typography variant="h6" sx={{ fontWeight: "bold", color: "#0091f3" }}>
+        <Typography variant="h6" sx={{ fontWeight: "bold", color: "black" }}>
             {question.title}
         </Typography>
         <Box display="flex" gap={1} mt={0.5} flexWrap="wrap">
@@ -23,8 +24,9 @@ export default function QuestionCard({ question }) {
                     size="small"
                     sx={{
                     fontWeight: "bold",
-                    backgroundColor: "#e3f2fd",
-                    color: "#0091f3",
+                    backgroundColor: "#EDF2FF",
+                    color: "black",
+                    border: "1px solid gray"
                     }}
                 />
             ))}

@@ -4,16 +4,26 @@ export default function Filters({ topics, selectedTopic, setSelectedTopic, selec
     return (
         <Box display="flex" gap={2} mb={3} flexWrap="wrap">
             <FormControl sx={{ minWidth: 160 }}>
-                <InputLabel sx={{ color: "#0091f3" }}>Topic</InputLabel>
+                <InputLabel sx={{ color: "black" }}>Topic</InputLabel>
                 <Select
                     value={selectedTopic}
                     onChange={(e) => setSelectedTopic(e.target.value)}
                     input={<OutlinedInput label="Topic" />}
                     disabled={disabled}
                     sx={{
-                        "& .MuiOutlinedInput-notchedOutline": { borderColor: "#0091f3" },
-                        "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#0077c2" },
-                        "& .MuiSvgIcon-root": { color: "#0091f3" },
+                        backgroundColor: "white",
+                        "& .MuiOutlinedInput-notchedOutline": { borderColor: "black" },
+                        "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "black" },
+                        "& .MuiSvgIcon-root": { color: "black" },
+                    }}
+                    MenuProps={{
+                        PaperProps: {
+                            sx: {
+                            "& .MuiMenuItem-root:hover": {
+                                backgroundColor: "#EDF2FF",
+                            },
+                            },
+                        },
                     }}
                 >
                 <MenuItem value="">All</MenuItem>
@@ -26,16 +36,26 @@ export default function Filters({ topics, selectedTopic, setSelectedTopic, selec
             </FormControl>
 
             <FormControl sx={{ minWidth: 160 }}>
-                <InputLabel sx={{ color: "#0091f3" }}>Difficulty</InputLabel>
+                <InputLabel sx={{ color: "black" }}>Difficulty</InputLabel>
                 <Select
                     value={selectedDifficulty}
                     onChange={(e) => setSelectedDifficulty(e.target.value)}
                     input={<OutlinedInput label="Difficulty" />}
                     disabled={disabled}
                     sx={{
-                        "& .MuiOutlinedInput-notchedOutline": { borderColor: "#0091f3" },
-                        "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#0077c2" },
-                        "& .MuiSvgIcon-root": { color: "#0091f3" },
+                        backgroundColor: "white",
+                        "& .MuiOutlinedInput-notchedOutline": { borderColor: "black" },
+                        "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "black" },
+                        "& .MuiSvgIcon-root": { color: "black" },
+                    }}
+                    MenuProps={{
+                        PaperProps: {
+                            sx: {
+                            "& .MuiMenuItem-root:hover": {
+                                backgroundColor: "#EDF2FF",
+                            },
+                            },
+                        },
                     }}
                 >
                     <MenuItem value="">All</MenuItem>

@@ -35,6 +35,7 @@ export default function TopBar({ partner, startTime, connectedUsers, handleEndSe
                 px: 3,
                 py: 3,
                 borderBottom: "1px solid #eee",
+                bgcolor: "white"
             }}
         >
         <Box display="flex" alignItems="center" gap={2}>
@@ -52,10 +53,25 @@ export default function TopBar({ partner, startTime, connectedUsers, handleEndSe
                 <Chip 
                     icon={<PersonIcon />} 
                     label={`${connectedUsers} connected`} 
+                    sx={{ bgcolor: "#EDF2FF", color: "#000", fontWeight: "bold" }}
                 />
-                <Chip label={`${username} and ${partnerUsername}`} />
+                <Chip 
+                    sx={{ bgcolor: "#EDF2FF", color: "#000", fontWeight: "bold" }} 
+                    label={`${username} and ${partnerUsername}`} 
+                />
             </Box>
-            <Button startIcon={<ExitIcon />} variant="outlined" color="gray" onClick={handleEndSession}>
+            <Button 
+                startIcon={<ExitIcon />} 
+                variant="contained" 
+                sx={{
+                    bgcolor: "#EDF2FF",  
+                    color: "#000",          
+                    "&:hover": {
+                    bgcolor: "#D6E0FF", 
+                    },
+                }}
+                onClick={handleEndSession}
+            >
                 End Session
             </Button>
         </Box>

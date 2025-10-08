@@ -41,7 +41,7 @@ export default function CodeEditorPanel({ sessionId, code: parentCode, language:
         <Box sx={{ flexGrow: 1, p: 2, display: "flex", flexDirection: "column" }}>
             <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <CodeIcon color="primary" />
+                    <CodeIcon />
                     <Typography variant="subtitle1" fontWeight="bold">
                         Code Editor
                     </Typography>

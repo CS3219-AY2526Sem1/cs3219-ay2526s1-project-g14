@@ -27,7 +27,7 @@ export default function ChatPanel({
         }}>
 
         <Box sx={{ p: 1, display: "flex", alignItems: "center", gap: 1 }}>
-            <ChatIcon color="primary" />
+            <ChatIcon />
             <Typography variant="subtitle1" fontWeight="bold">Chat</Typography>
         </Box>
 
@@ -47,8 +47,8 @@ export default function ChatPanel({
                     <Box
                         sx={{
                             backgroundColor:
-                                message.userId === userId ? "#0091f3" : "#f5f5f5",
-                            color: message.userId === userId ? "white" : "black",
+                                message.userId === userId ? "#EDF2FF" : "#f5f5f5",
+                            color: "black",
                             borderRadius: 2,
                             px: 2,
                             py: 1,
@@ -79,7 +79,7 @@ export default function ChatPanel({
                 }}
             />
             <IconButton
-                color="primary"
+                sx = {{color:"black"}}
                 onClick={handleSendMessage}
                 disabled={!newMessage.trim()}
             >

@@ -75,7 +75,8 @@ const NavigationBar = () => {
             }}
         >
             <Box sx={{ display: "flex", alignItems: "center" }}>
-                <img src="/logo.png" alt="Logo" style={{ height: 80 }} />
+                {/* <img src="/logo.png" alt="Logo" style={{ height: 80 }} /> */}
+                <Typography variant="h5" sx={{ fontWeight: "bold", color: "black" }}>PeerPrep</Typography>
             </Box>
 
             <Box sx={{ display: "flex", gap: 4 }}>
@@ -86,10 +87,10 @@ const NavigationBar = () => {
                         alignItems: "center",
                         gap: "6px",
                         textDecoration: "none",
-                        color: "#0091f3",
+                        color: "black",
                     }}
                 >
-                    <Typography sx={{ fontSize: "1.2rem", fontWeight: "semibold" }}>Home</Typography>
+                    <Typography sx={{ fontSize: "1rem", fontWeight: "semibold" }}>Home</Typography>
                 </a>
                 <a
                     href="/questions"
@@ -98,17 +99,17 @@ const NavigationBar = () => {
                         alignItems: "center",
                         gap: "6px",
                         textDecoration: "none",
-                        color: "#0091f3",
+                        color: "black",
                     }}
                 >
-                    <Typography sx={{ fontSize: "1.2rem", fontWeight: "semibold" }}>Question List</Typography>
+                    <Typography sx={{ fontSize: "1rem", fontWeight: "semibold" }}>Question List</Typography>
                 </a>
             </Box>
 
             <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <AccountCircleIcon sx={{ fontSize: 32, color: "#0091f3" }} />
-                    <Typography sx={{ color: "#0091f3", fontWeight: "bold" }}>
+                    <AccountCircleIcon sx={{ fontSize: 32, color: "black" }} />
+                    <Typography sx={{ color: "black", fontWeight: "bold" }}>
                         {username || 'User'}
                     </Typography>
                 </Box>
@@ -118,12 +119,12 @@ const NavigationBar = () => {
                     sx={{
                         marginLeft: 4,
                         backgroundColor: "white",
-                        color: "#0091f3",
+                        color: "#EDF2FF",
                         textTransform: "none",
                         "&:hover": { backgroundColor: "#f1f1f1" },
                     }}
                 >
-                <Typography sx={{ color: "#0091f3", fontWeight: "semibold" }}>Logout</Typography>
+                <Typography sx={{ color: "black", fontWeight: "semibold" }}>Logout</Typography>
                 </Button>
             </Box>
         </Box>

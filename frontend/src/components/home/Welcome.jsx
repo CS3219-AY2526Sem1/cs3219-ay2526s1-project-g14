@@ -2,8 +2,8 @@ import { Paper, Typography } from "@mui/material";
 
 export default function Welcome({ username }) {
   return (
-        <Paper sx={{ p: 3, backgroundColor: "#E3F2FD" }}>
-            <Typography variant="h5" sx={{ fontWeight: "bold", color: "#0091f3" }}>
+        <Paper sx={{ p: 3, backgroundColor: "white" }}>
+            <Typography variant="h5" sx={{ fontWeight: "bold", color: "black" }}>
                 Welcome back, {username}!
             </Typography>
             <Typography mt={1}>
