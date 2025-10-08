@@ -1,5 +1,5 @@
 const axios = require("axios");
-const MATCHING_SERVICE_URL = process.env.MATCHING_SERVICE_URL || "http://localhost:7070";
+const MATCHING_SERVICE_URL = process.env.MATCHING_SERVICE_URL || "http://localhost:4100/matching";
 
 exports.start = async (req, res) => {
   try {

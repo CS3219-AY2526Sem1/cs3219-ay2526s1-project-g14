@@ -1,9 +1,9 @@
 import './App.css';
+import { useEffect } from 'react';
 import {
   BrowserRouter as Router,
   Routes,
   Route,
-  useLocation,
   useNavigate
 } from "react-router-dom";
 import { useSelector } from "react-redux";
@@ -18,12 +18,11 @@ import CollaborationSession from './views/collaboration-session';
 
 import MatchingStatus from "./views/matching-status";
 
-import { useEffect } from 'react';
 
 function AppContent() {
   const navigate = useNavigate();
-  const { username } = useSelector((state) => state.auth);
-  
+  const username = useSelector((state) => state.auth.username);
+
   const checkAuthenticated = () => {
     if (username == null) {
       navigate(PAGES.LOGIN)
@@ -32,7 +31,7 @@ function AppContent() {
 
   useEffect(() => {
     checkAuthenticated()
-  })
+  },[])
 
   return (
     <>

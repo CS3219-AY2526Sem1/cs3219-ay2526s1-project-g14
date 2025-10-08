@@ -12,8 +12,15 @@ const register = async (req, res) => {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    const existingUser = await User.findOne({ email });
-    if (existingUser) return res.status(400).json({ message: "Email already registered" });
+    const existingUser = await User.findOne({ $or: [ {email}, {username}] });
+    if (existingUser) {
+      if (existingUser.email === email) {
+        return res.status(400).json({ message: "Email already registered" });
+      }
+      if (existingUser.username === username) {
+        return res.status(400).json({ message: "Username already taken" });
+      }
+    } 
 
     let pending = await TempUser.findOne({ email });
     const otp = generateOtp();

@@ -10,15 +10,15 @@ export const API = {
     VERIFY_OTP: "/auth/verify-otp",
     FIREBASE_AUTH: "/auth/firebase",
 
+    USER: "/user",
     QUESTIONS: "/questions",
-    RANDOMQUESTION: "/questions/random",
+    RANDOMQUESTION: "/questions/random-question",
     TOPICS: "/topics",
-
 };
 
 export const MATCHING_API = {
-    START: "/api/matching/start",
-    STATUS: (id) => `/api/matching/${id}/status`,
-    CANCEL: (id) => `/api/matching/${id}/cancel`,
+    START: "/matching/start",
+    STATUS: (id) => `/matching/${id}/status`,
+    CANCEL: (id) => `/matching/${id}/cancel`,
   };
   

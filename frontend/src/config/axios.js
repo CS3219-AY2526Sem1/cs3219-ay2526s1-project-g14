@@ -29,22 +29,23 @@ const forceToLogout = () => {
     window.location.href="/"
 }
 
-axiosInstance.interceptors.request.use(
-    async config => {
-        const state = JSON.parse(localStorage.getItem("state"))
-        let token = "";
-        if (state != undefined) {
-            token = state.user.token;
-        }
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-    },
-    err => {
-        return Promise.reject(err);
-    }
-);
+function getToken() {
+    const direct = localStorage.getItem('token');
+    const alt = localStorage.getItem('authToken');
+    try {
+      const u = JSON.parse(localStorage.getItem('user') || '{}');
+      if (u?.token) return u.token;
+    } catch {}
+    return direct || alt || null;
+  }
+
+axiosInstance.interceptors.request.use((config) => {
+  const token = getToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
 axiosInstance.interceptors.response.use(
     response =>
