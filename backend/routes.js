@@ -2,6 +2,7 @@ const router = require('express').Router();
 const { getQuestions, getRandomQuestion, getTopics } = require('./controller/questionController');
 const Auth = require("./controller/authController");
 const { authMiddleware } = require("./middleware/auth");
+const Matching = require("./controller/matchingController");
 
 router.post("/auth/register", Auth.register);
 router.post("/auth/verify-otp", Auth.verifyOTP);

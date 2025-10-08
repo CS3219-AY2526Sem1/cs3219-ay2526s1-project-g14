@@ -15,6 +15,8 @@ import Auth from "./views/Auth";
 import QuestionsPage from './views/questions-page';
 import { useEffect } from 'react';
 
+import MatchingStatus from "./views/matching-status";
+
 function AppContent() {
   const navigate = useNavigate();
   const { username } = useSelector((state) => state.auth);
@@ -38,6 +40,7 @@ function AppContent() {
         <Route path={PAGES.LOGIN} element={<Auth />} />
         <Route path={PAGES.REGISTER} element={<Auth />} />
         <Route path="/questions" element={<QuestionsPage />} />
+        <Route path="/match" element={<MatchingStatus />} />
       </Routes>
     </>
   );

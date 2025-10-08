@@ -4,7 +4,8 @@ const {
     acquireUserLock,
     releaseUserLock,
     getRequest,
-    pairOrEnqueueAtomic
+    pairOrEnqueueAtomic,
+    cancelRequest,
 } = require("../queue/redisMatchingQueue");
 
 const r = Router();
@@ -24,6 +25,8 @@ r.post("/matches", async (req, res) => {
         const headerUserId = req.get("X-User-Id");
         const userId = headerUserId || (req.user && req.user.id) || "devUser";
 
+        const username = req.body?.username || req.get("X-Username") || "User";
+
         const { difficulty, topic } = req.body || {};
         if (!difficulty || !topic) {
             return res.status(400).json({ error: "difficulty & topic required" });
@@ -37,12 +40,10 @@ r.post("/matches", async (req, res) => {
             return res.status(409).json({ error: "user already searching or matched" });
         }
 
-        // atomic pair-or-enqueue
         const now = Date.now();
-        const counterpartReqId = await pairOrEnqueueAtomic(requestId, userId, difficulty, topic, now);
+        const counterpartReqId = await pairOrEnqueueAtomic(requestId, userId, username, difficulty, topic, now);
 
         if (counterpartReqId) {
-            // dev convenience: release both locks to allow immediate re-tests
             const thisReq = await getRequest(requestId);
             const thatReq = await getRequest(counterpartReqId);
             if (thisReq?.userId) await releaseUserLock(thisReq.userId);
@@ -71,11 +72,28 @@ r.get("/matches/:requestId", async (req, res) => {
         const { requestId } = req.params;
         const reqHash = await getRequest(requestId);
         if (!reqHash) return res.status(404).json({ error: "not_found" });
+        const ttlSec = Number(process.env.MATCH_REQUEST_TTL_SECONDS || 60);
+        const createdAt = Number(reqHash.createdAt || 0);
+        const ageMs = Date.now() - createdAt;
+        if (reqHash.status === "SEARCHING" && ageMs >= ttlSec * 1000) {
+          reqHash.status = "TIMEOUT";
+        }
         res.json({ requestId, ...reqHash });
     } catch (e) {
         console.error("GET /matches/:id error:", e);
         res.status(500).json({ error: "internal_error", detail: String(e) });
     }
 });
+
+r.delete("/matches/:requestId", async (req, res) => {
+    try {
+      const { requestId } = req.params;
+      await cancelRequest(requestId);  
+      res.json({ ok: true });
+    } catch (e) {
+      console.error("DELETE /matches/:id error:", e);
+      res.status(500).json({ error: "internal_error", detail: String(e) });
+    }
+  });
 
 module.exports = r;
