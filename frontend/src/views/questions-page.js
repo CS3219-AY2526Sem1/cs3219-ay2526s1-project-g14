@@ -46,7 +46,7 @@ const QuestionsPage = () => {
 
   return (
     <Box p={3}>
-      <Typography variant="h4" mb={3} sx={{ fontWeight: "bold", color: "#0091f3" }}>
+      <Typography variant="h5" mb={3} sx={{ fontWeight: "bold", color: "black" }}>
         Questions
       </Typography>
 
@@ -58,7 +58,7 @@ const QuestionsPage = () => {
         setSelectedDifficulty={setSelectedDifficulty}
       />
 
-      {loading && <CircularProgress sx={{ color: "#0091f3" }} />}
+      {loading && <CircularProgress sx={{ color: "black" }} />}
       {error && (
         <Typography color="error" sx={{ mt: 1 }}>
           {error}

@@ -9,6 +9,16 @@ export const fetchQuestions = async(topic="", difficulty="") => {
     return data.payload;
 }
 
+export const getQuestionById = async (id) => {
+    try {
+        const { data } = await axiosInstance.get(`${API.QUESTIONS}/${id}`);
+        return data.payload;
+    } catch (error) {
+        console.error("Error fetching question by ID:", error);
+        throw error;
+    }
+};
+
 export const fetchTopics = async() => {
     const { data } = await axiosInstance.get(API.TOPICS);
     return data.payload

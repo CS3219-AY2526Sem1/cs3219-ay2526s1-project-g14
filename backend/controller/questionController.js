@@ -1,3 +1,5 @@
+const mongoose = require("mongoose");
+
 const Question = require("../model/questionModel.js");
 
 exports.getQuestions = async (req, res) => {
@@ -10,6 +12,31 @@ exports.getQuestions = async (req, res) => {
         res.status(200).json({ success: true, payload: questions });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
+    }
+};
+
+// Get a single question by its MongoDB ObjectId
+exports.getQuestionById = async (req, res) => {
+    try {
+        const { questionId } = req.params;
+        console.log("req", req)
+
+        if (!mongoose.Types.ObjectId.isValid(questionId)) {
+            return res.status(400).json({ success: false, message: "Invalid question ID format.", });
+        }
+
+        const question = await Question.findById(questionId);
+
+        if (!question) {
+            return res.status(404).json({
+                success: false,
+                message: "Question not found.",
+            });
+        }
+        res.status(200).json({ success: true, payload: question, });
+    } catch (err) {
+        console.error("Error fetching question:", err);
+        res.status(500).json({ success: false, error: err.message, });
     }
 };
 
