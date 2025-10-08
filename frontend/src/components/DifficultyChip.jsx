@@ -9,10 +9,10 @@ const difficultyColors = {
 export default function DifficultyChip({ difficulty }) {
     return (
         <Chip
-        label={difficulty}
-        color={difficultyColors[difficulty] || "default"}
-        size="small"
-        sx={{ fontWeight: "bold" }}
+            label={difficulty}
+            color={difficultyColors[difficulty] || "default"}
+            size="small"
+            sx={{ fontWeight: "bold" }}
         />
     );
 }

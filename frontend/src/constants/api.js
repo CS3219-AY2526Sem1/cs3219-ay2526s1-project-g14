@@ -10,8 +10,8 @@ export const API = {
     VERIFY_OTP: "/auth/verify-otp",
     FIREBASE_AUTH: "/auth/firebase",
 
+    USER: "/user",
     QUESTIONS: "/questions",
-    RANDOMQUESTION: "/questions/random",
+    RANDOMQUESTION: "/questions/random-question",
     TOPICS: "/topics",
-
 };

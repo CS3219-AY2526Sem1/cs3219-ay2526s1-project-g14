@@ -1,6 +1,4 @@
-import {
-    API
-} from '../constants/api'
+import { API } from '../constants/api'
 import axiosInstance from "../config/axios"
 
 export const saveUsername = async (username) => {
@@ -13,3 +11,13 @@ export const saveUsername = async (username) => {
         return false;
     }
 }
+
+export const getUserById = async (id) => {
+    try {
+        const { data } = await axiosInstance.get(`${API.USER}/${id}`);
+        return data.payload;
+    } catch (error) {
+        console.error("Error fetching user by ID:", error);
+        throw error;
+    }
+};

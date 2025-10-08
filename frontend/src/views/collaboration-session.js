@@ -1,56 +1,30 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { useSelector } from "react-redux";
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     Box,
-    Grid,
-    Paper,
     Typography,
     Button,
-    TextField,
     Alert,
-    Chip,
-    Divider,
-    List,
-    ListItem,
-    ListItemText,
-    IconButton,
-    Select,
-    MenuItem,
-    FormControl,
-    InputLabel,
-    Tabs,
-    Tab
 } from '@mui/material';
-import {
-    Send as SendIcon,
-    ExitToApp as ExitIcon,
-    Person as PersonIcon,
-    QuestionAnswer as QuestionIcon,
-    Code as CodeIcon
-} from '@mui/icons-material';
 import collaborationService from '../services/collaborationService';
-import QuestionDisplay from '../components/collaboration/QuestionDisplay';
+import TopBar from '../components/collaboration/TopBar';
+import QuestionPanel from '../components/collaboration/QuestionPanel/QuestionPanel';
+import CodeEditorPanel from '../components/collaboration/CodeEditorPanel';
+import ChatPanel from '../components/collaboration/ChatPanel';
 
 export default function CollaborationSession() {
     const { sessionId } = useParams();
     const navigate = useNavigate();
-    
-    // Get user from session storage (set by UserSelector)
-    const getCurrentUser = () => {
-        const storedUser = sessionStorage.getItem('currentUser');
-        if (storedUser) {
-            return JSON.parse(storedUser);
-        }
-        // Fallback if no user selected
-        return { id: "user123", username: "Guest" };
-    };
-    
-    const currentUser = getCurrentUser();
+
+    const username = useSelector((state) => state.auth.username);
+    const userId = useSelector((state) => state.auth.id);
 
     // Session state
     const [session, setSession] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [question, setQuestion] = useState(null);
     
     // Code editor state
     const [code, setCode] = useState('');
@@ -64,9 +38,6 @@ export default function CollaborationSession() {
     const [connectedUsers, setConnectedUsers] = useState([]);
     const [partner, setPartner] = useState(null);
     
-    // UI state
-    const [leftPanelTab, setLeftPanelTab] = useState(0); // 0: Question, 1: Code
-
     useEffect(() => {
         loadSession();
         setupSocketListeners();
@@ -82,16 +53,18 @@ export default function CollaborationSession() {
             const sessionData = response.payload;
             
             setSession(sessionData);
+            console.log("sessionData", sessionData)
+            setQuestion(sessionData.questionId)
             setCode(sessionData.code || '');
             setLanguage(sessionData.language || 'javascript');
             setChatMessages(sessionData.chatHistory || []);
             
             // Find partner
-            const partnerData = sessionData.participants.find(p => p.userId !== currentUser.userId);
-            setPartner(partnerData);
+            const partnerData = sessionData.participants.find(p => p.userId._id !== userId);
+            setPartner(partnerData.userId._id);
             
             // Join socket room
-            collaborationService.joinSession(sessionId, currentUser.userId, currentUser.username);
+            collaborationService.joinSession(sessionId, userId, username);
             
         } catch (err) {
             setError(err.message);
@@ -127,20 +100,6 @@ export default function CollaborationSession() {
             alert(`Session ended by ${data.endedBy}`);
             navigate('/');
         });
-    };
-
-    const handleCodeChange = (newCode) => {
-        setCode(newCode);
-        // Debounce code updates to avoid too many socket emissions
-        clearTimeout(window.codeUpdateTimeout);
-        window.codeUpdateTimeout = setTimeout(() => {
-            collaborationService.sendCodeChange(sessionId, newCode, language);
-        }, 500);
-    };
-
-    const handleLanguageChange = (newLanguage) => {
-        setLanguage(newLanguage);
-        collaborationService.sendCodeChange(sessionId, code, newLanguage);
     };
 
     const handleSendMessage = () => {
@@ -182,201 +141,82 @@ export default function CollaborationSession() {
     }
 
     return (
-        <Box p={3} sx={{ height: 'calc(100vh - 100px)' }}>
-            {/* Header */}
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#0091f3' }}>
-                    Collaboration Session
-                </Typography>
-                <Box display="flex" gap={2} alignItems="center">
-                    <Chip 
-                        icon={<PersonIcon />} 
-                        label={`${connectedUsers} connected`} 
-                        color="primary" 
-                        variant="outlined"
-                    />
-                    <Button
-                        variant="outlined"
-                        color="error"
-                        startIcon={<ExitIcon />}
-                        onClick={handleEndSession}
-                    >
-                        End Session
-                    </Button>
+        <Box
+            sx={{
+                height: "100vh",
+                width: "100vw",
+                display: "flex",
+                flexDirection: "column",
+                overflow: "hidden",
+            }}
+        >
+            <TopBar
+                partner={partner}
+                startTime={session.startTime}
+                connectedUsers={connectedUsers}
+                handleEndSession={handleEndSession}
+            />
+
+            <Box sx={{
+                display: "flex",
+                flexGrow: 1,
+                height: "100%",
+                overflow: "hidden",
+                p: 2,
+                gap: 2
+            }}>
+                <Box sx={{
+                    width: { xs: "100%", md: "30%" },
+                    border: "1px solid #ddd",
+                    borderRadius: 2,
+                    bgcolor: "white",
+                    overflowY: "auto",
+                    p: 2,
+                }}>
+                    <QuestionPanel question={question} />
+                </Box>
+
+                <Box sx={{
+                    flexGrow: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    height: "100%",
+                    overflow: "hidden",
+                    gap: 2
+                }}>
+                    <Box sx={{
+                        flex: 6, // 60%
+                        border: "1px solid #ddd",
+                        borderRadius: 2,
+                        bgcolor: "white",
+                        p: 1,
+                        display: "flex",
+                        flexDirection: "column",
+                        overflow: "hidden",rBottom: "1px solid #eee"
+                    }}>
+                        <CodeEditorPanel sessionId={sessionId} code={code} language={language} />
+                    </Box>
+
+                    <Box sx={{
+                        flex: 4, // 40%
+                        border: "1px solid #ddd",
+                        borderRadius: 2,
+                        bgcolor: "white",
+                        p: 1,
+                        display: "flex",
+                        flexDirection: "column",
+                        overflow: "hidden",
+                    }}>
+                        <ChatPanel
+                            chatMessages={chatMessages}
+                            userId={userId}
+                            newMessage={newMessage}
+                            setNewMessage={setNewMessage}
+                            handleSendMessage={handleSendMessage}
+                        />
+                    </Box>
                 </Box>
             </Box>
-
-            {/* Session Info */}
-            <Paper sx={{ p: 2, mb: 2 }}>
-                <Grid container spacing={2} alignItems="center">
-                    <Grid item xs={12} md={6}>
-                        <Typography variant="h6" gutterBottom>
-                            {session?.questionId?.title || 'Loading question...'}
-                        </Typography>
-                        <Box display="flex" gap={1}>
-                            <Chip label={session?.difficulty} color="primary" size="small" />
-                            <Chip label={session?.topic} color="secondary" size="small" />
-                        </Box>
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                        <Typography variant="body2" color="textSecondary">
-                            Partner: {partner?.username || 'Waiting...'}
-                        </Typography>
-                        <Typography variant="body2" color="textSecondary">
-                            Session ID: {sessionId}
-                        </Typography>
-                    </Grid>
-                </Grid>
-            </Paper>
-
-            <Grid container spacing={2} sx={{ height: 'calc(100% - 140px)' }}>
-                {/* Left Panel - Question & Code */}
-                <Grid item xs={12} md={8}>
-                    <Paper sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                        {/* Tab Navigation */}
-                        <Box sx={{ borderBottom: '1px solid #e0e0e0' }}>
-                            <Tabs 
-                                value={leftPanelTab} 
-                                onChange={(e, newValue) => setLeftPanelTab(newValue)}
-                                sx={{ minHeight: 48 }}
-                            >
-                                <Tab 
-                                    icon={<QuestionIcon />} 
-                                    label="Problem" 
-                                    iconPosition="start"
-                                    sx={{ minHeight: 48 }}
-                                />
-                                <Tab 
-                                    icon={<CodeIcon />} 
-                                    label="Code Editor" 
-                                    iconPosition="start"
-                                    sx={{ minHeight: 48 }}
-                                />
-                            </Tabs>
-                        </Box>
-
-                        {/* Tab Content */}
-                        <Box sx={{ flex: 1, overflow: 'hidden' }}>
-                            {leftPanelTab === 0 && (
-                                /* Question Tab */
-                                <QuestionDisplay
-                                    question={session?.questionId}
-                                    questionMetadata={session?.questionMetadata}
-                                    difficulty={session?.difficulty}
-                                    topics={session?.questionMetadata?.topics || [session?.topic]}
-                                />
-                            )}
-                            
-                            {leftPanelTab === 1 && (
-                                /* Code Editor Tab */
-                                <Box sx={{ height: '100%', p: 2, display: 'flex', flexDirection: 'column' }}>
-                                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                                        <Typography variant="h6">Code Editor</Typography>
-                                        <FormControl size="small" sx={{ minWidth: 120 }}>
-                                            <InputLabel>Language</InputLabel>
-                                            <Select
-                                                value={language}
-                                                label="Language"
-                                                onChange={(e) => handleLanguageChange(e.target.value)}
-                                            >
-                                                <MenuItem value="javascript">JavaScript</MenuItem>
-                                                <MenuItem value="python">Python</MenuItem>
-                                                <MenuItem value="java">Java</MenuItem>
-                                                <MenuItem value="cpp">C++</MenuItem>
-                                            </Select>
-                                        </FormControl>
-                                    </Box>
-                                    
-                                    <TextField
-                                        multiline
-                                        fullWidth
-                                        rows={25}
-                                        value={code}
-                                        onChange={(e) => handleCodeChange(e.target.value)}
-                                        placeholder="Start coding here..."
-                                        variant="outlined"
-                                        sx={{
-                                            flex: 1,
-                                            '& .MuiInputBase-root': {
-                                                fontFamily: 'monospace',
-                                                fontSize: '14px',
-                                                height: '100%'
-                                            },
-                                            '& .MuiInputBase-input': {
-                                                height: '100% !important',
-                                                overflow: 'auto !important'
-                                            }
-                                        }}
-                                    />
-                                </Box>
-                            )}
-                        </Box>
-                    </Paper>
-                </Grid>
-
-                {/* Right Panel - Chat */}
-                <Grid item xs={12} md={4}>
-                    <Paper sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                        <Box sx={{ p: 2, borderBottom: '1px solid #e0e0e0' }}>
-                            <Typography variant="h6">Chat</Typography>
-                        </Box>
-                        
-                        {/* Chat Messages */}
-                        <Box sx={{ flex: 1, overflow: 'auto', p: 1 }}>
-                            <List dense>
-                                {chatMessages.map((message, index) => (
-                                    <ListItem key={index} sx={{ 
-                                        flexDirection: 'column', 
-                                        alignItems: message.userId === currentUser.userId ? 'flex-end' : 'flex-start',
-                                        py: 0.5
-                                    }}>
-                                        <Box sx={{
-                                            backgroundColor: message.userId === currentUser.userId ? '#0091f3' : '#f5f5f5',
-                                            color: message.userId === currentUser.userId ? 'white' : 'black',
-                                            borderRadius: 2,
-                                            px: 2,
-                                            py: 1,
-                                            maxWidth: '80%'
-                                        }}>
-                                            <Typography variant="caption" display="block">
-                                                {message.username}
-                                            </Typography>
-                                            <Typography variant="body2">
-                                                {message.message}
-                                            </Typography>
-                                        </Box>
-                                    </ListItem>
-                                ))}
-                            </List>
-                        </Box>
-
-                        {/* Chat Input */}
-                        <Box sx={{ p: 2, borderTop: '1px solid #e0e0e0' }}>
-                            <Box display="flex" gap={1}>
-                                <TextField
-                                    fullWidth
-                                    size="small"
-                                    placeholder="Type a message..."
-                                    value={newMessage}
-                                    onChange={(e) => setNewMessage(e.target.value)}
-                                    onKeyPress={(e) => {
-                                        if (e.key === 'Enter') {
-                                            handleSendMessage();
-                                        }
-                                    }}
-                                />
-                                <IconButton 
-                                    color="primary" 
-                                    onClick={handleSendMessage}
-                                    disabled={!newMessage.trim()}
-                                >
-                                    <SendIcon />
-                                </IconButton>
-                            </Box>
-                        </Box>
-                    </Paper>
-                </Grid>
-            </Grid>
         </Box>
     );
 }

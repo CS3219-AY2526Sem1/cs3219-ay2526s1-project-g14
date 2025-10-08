@@ -1,6 +1,7 @@
 const router = require('express').Router();
-const { getQuestions, getRandomQuestion, getTopics } = require('./controller/questionController');
+const { getQuestions, getQuestionById, getRandomQuestion, getTopics } = require('./controller/questionController');
 const Auth = require("./controller/authController");
+const { getUserById } = require('./controller/userController')
 const { authMiddleware } = require("./middleware/auth");
 
 const { 
@@ -18,9 +19,13 @@ router.post("/auth/resend-otp", Auth.resendOTP);
 router.post("/auth/login", Auth.login);
 router.post("/auth/firebase", Auth.upsertFirebase);
 
-// // Question routes (upstream priority - protected with auth)
+// User routes
+router.get("/user/:userId", authMiddleware, getUserById);
+
+// Question routes (upstream priority - protected with auth)
 router.get("/questions", authMiddleware, getQuestions);
-router.get("/questions/random", authMiddleware, getRandomQuestion);
+router.get("/questions/random-question", authMiddleware, getRandomQuestion);
+router.get("/questions/:questionId", authMiddleware, getQuestionById);
 router.get("/topics", authMiddleware, getTopics);
 
 // Collaboration microservice routes (pure microservice API)

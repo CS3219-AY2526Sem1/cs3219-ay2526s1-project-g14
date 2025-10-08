@@ -54,7 +54,10 @@ const NavigationBar = () => {
         navigate(PAGES.LOGIN);
     };
 
-    if (location.pathname === "/login" || location.pathname === "/register") {
+    const isCollaborationPage = /^\/collaboration(\/|$)/.test(location.pathname);
+
+
+    if (location.pathname === "/login" || location.pathname === "/register" || isCollaborationPage) {
         return null;
     }
     
@@ -88,7 +91,6 @@ const NavigationBar = () => {
                 >
                     <Typography sx={{ fontSize: "1.2rem", fontWeight: "semibold" }}>Home</Typography>
                 </a>
-
                 <a
                     href="/questions"
                     style={{
@@ -121,7 +123,7 @@ const NavigationBar = () => {
                         "&:hover": { backgroundColor: "#f1f1f1" },
                     }}
                 >
-                    <Typography sx={{ color: "#0091f3", fontWeight: "semibold" }}>Logout</Typography>
+                <Typography sx={{ color: "#0091f3", fontWeight: "semibold" }}>Logout</Typography>
                 </Button>
             </Box>
         </Box>
