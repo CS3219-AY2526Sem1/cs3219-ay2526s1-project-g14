@@ -15,3 +15,10 @@ export const API = {
     RANDOMQUESTION: "/questions/random-question",
     TOPICS: "/topics",
 };
+
+export const MATCHING_API = {
+    START: "/matching/start",
+    STATUS: (id) => `/matching/${id}/status`,
+    CANCEL: (id) => `/matching/${id}/cancel`,
+  };
+  

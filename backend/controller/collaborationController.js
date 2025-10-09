@@ -76,7 +76,7 @@ exports.createSession = async (req, res) => {
 
         // Emit event via socket.io 
         socketService.io.emit("sessionCreated", {
-            sessionId: session.sessionId,
+            sessionId: session.sessionId.replace(/^room:/, ''),
             participants: participants.map((p) => p.userId),
             topic: topic || question.topic,
             difficulty: difficulty || question.difficulty,
@@ -86,7 +86,7 @@ exports.createSession = async (req, res) => {
         return res.status(201).json({
             success: true,
             payload: {
-                sessionId: session.sessionId,
+                sessionId: session.sessionId.replace(/^room:/, ''),
                 session,
                 question,
             },
@@ -94,7 +94,7 @@ exports.createSession = async (req, res) => {
 
     } catch (error) {
         console.error('Create session error:', error);
-        res.status(500).json({ success: false, error: err.message });
+        res.status(500).json({ success: false, error: error.message || 'Server Error' });
     }
 };
 
@@ -148,7 +148,7 @@ exports.updateSessionCode = async (req, res) => {
         }
 
         // Emit real-time code update
-        socketService.io.to(sessionId).emit("codeUpdated", { code, language });
+        socketService.io.to(sessionId.replace(/^room:/, '')).emit("code-updated", { code, language });
 
         res.status(200).json({
             success: true,

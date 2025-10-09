@@ -29,8 +29,18 @@ const forceToLogout = () => {
     window.location.href="/"
 }
 
+function getToken() {
+    const direct = localStorage.getItem('token');
+    const alt = localStorage.getItem('authToken');
+    try {
+      const u = JSON.parse(localStorage.getItem('user') || '{}');
+      if (u?.token) return u.token;
+    } catch {}
+    return direct || alt || null;
+  }
+
 axiosInstance.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
+  const token = getToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }

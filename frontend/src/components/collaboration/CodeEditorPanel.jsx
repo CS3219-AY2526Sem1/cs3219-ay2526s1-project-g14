@@ -12,7 +12,13 @@ import {
 import CodeIcon from '@mui/icons-material/Code';
 import collaborationService from '../../services/collaborationService';
 
-export default function CodeEditorPanel({ sessionId, code: parentCode, language: parentLanguage }) {
+export default function CodeEditorPanel({ 
+    sessionId, 
+    code: parentCode, 
+    language: parentLanguage,
+    onCodeChange,
+    onLanguageChange 
+}) {
     const [code, setCode] = useState(parentCode || '');
     const [language, setLanguage] = useState(parentLanguage || 'javascript');
 
@@ -26,15 +32,19 @@ export default function CodeEditorPanel({ sessionId, code: parentCode, language:
 
     const handleCodeChange = (newCode) => {
         setCode(newCode);
-        clearTimeout(window.codeUpdateTimeout);
-        window.codeUpdateTimeout = setTimeout(() => {
-            collaborationService.sendCodeChange(sessionId, newCode, language);
-        }, 500);
+        if (onCodeChange) {
+            clearTimeout(window.codeUpdateTimeout);
+            window.codeUpdateTimeout = setTimeout(() => {
+                onCodeChange(newCode);
+            }, 500);
+        }
     };
 
     const handleLanguageChange = (newLanguage) => {
         setLanguage(newLanguage);
-        collaborationService.sendCodeChange(sessionId, code, newLanguage);
+        if (onLanguageChange) {
+            onLanguageChange(newLanguage);
+        }
     };
 
     return (

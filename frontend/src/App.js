@@ -13,7 +13,11 @@ import NavigationBar from './components/NavigationBar';
 import Home from "./views/home";
 import Auth from "./views/Auth";
 import QuestionsPage from './views/questions-page';
+
 import CollaborationSession from './views/collaboration-session';
+
+import MatchingStatus from "./views/matching-status";
+
 
 function AppContent() {
   const navigate = useNavigate();
@@ -39,6 +43,7 @@ function AppContent() {
         <Route path={PAGES.REGISTER} element={<Auth />} />
         <Route path="/questions" element={<QuestionsPage />} />
         <Route path="/collaboration/:sessionId" element={<CollaborationSession />} />
+        <Route path="/match" element={<MatchingStatus />} />
       </Routes>
     </>
   );

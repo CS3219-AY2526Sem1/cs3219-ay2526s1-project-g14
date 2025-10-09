@@ -39,3 +39,25 @@
     Server is running on port 5000
     MongoDB connected
     ```
+
+
+
+#### Matching Service
+1. Switch to `matching-service` directory.
+    ```
+    cd matching-service
+    ```
+2. Install dependencies.
+    ```
+    npm install
+    ```
+3. Start the service.
+    ```
+    npm run dev
+    ```
+4. You should see the message below if the connection is successful.
+    ```
+    [redis] connected: redis://localhost:6379
+    [matching-service] listening on http://localhost:4100
+    ```
+

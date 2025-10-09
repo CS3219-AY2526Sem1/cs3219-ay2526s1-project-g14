@@ -17,8 +17,18 @@ export default function TopBar({ partner, startTime, connectedUsers, handleEndSe
         const fetchPartnerUsername = async () => {
             try {
                 if (!partner) return;
-                const result = await getUserById(partner);
-                setPartnerUsername(result.username);
+                const idStr = String(
+                    typeof partner === "string" ? partner : partner?.id || partner?._id || ""
+                  );
+            
+                  if (partner?.username) {
+                    setPartnerUsername(partner.username);
+                    return;
+                  }
+            
+                  if (!idStr) return;
+                const result = await getUserById(idStr);
+                setPartnerUsername(result.payload?.username || result.username || "Unknown");
             } catch (err) {
                 console.error("Error retrieving partner username", err);
             }
@@ -52,12 +62,16 @@ export default function TopBar({ partner, startTime, connectedUsers, handleEndSe
             <Box display="flex" alignItems="center" gap={0.5}>
                 <Chip 
                     icon={<PersonIcon />} 
-                    label={`${connectedUsers} connected`} 
+                    label={
+                        Array.isArray(connectedUsers)
+                          ? `${connectedUsers.length} connected`
+                          : `${connectedUsers || 0} connected`
+                    }
                     sx={{ bgcolor: "#EDF2FF", color: "#000", fontWeight: "bold" }}
                 />
                 <Chip 
                     sx={{ bgcolor: "#EDF2FF", color: "#000", fontWeight: "bold" }} 
-                    label={`${username} and ${partnerUsername}`} 
+                    label={`${username} and ${partnerUsername || "Unknown"}`}
                 />
             </Box>
             <Button 

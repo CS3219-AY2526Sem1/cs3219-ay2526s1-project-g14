@@ -1,5 +1,6 @@
 import axios from '../config/axios';
 import { io } from 'socket.io-client';
+import { MATCHING_API } from '../constants/api';
 
 class CollaborationService {
     constructor() {
@@ -29,31 +30,32 @@ class CollaborationService {
         return this.socket;
     }
 
-    // Join matching queue (calls external matching service)
-    async joinQueue(userId, username, difficulty, topic) {
+    async joinQueue({ topic, difficulty }) {
         try {
-            // In production, this would call the external matching service
-            // For now, using mock matching service
-            const response = await axios.post('/matching/queue', {
-                userId,
-                difficulty,
-                topic
-            });
-            return response.data;
+          const { data } = await axios.post(MATCHING_API.START, { topic, difficulty });
+          return data; // { requestId, status, ... }
         } catch (error) {
-            throw new Error(error.response?.data?.error || 'Failed to join queue');
+          throw new Error(error.response?.data?.error || 'Failed to start matching');
         }
-    }
+      }
 
-    // Leave matching queue
-    async leaveQueue(userId) {
+    async leaveQueue(requestId) {
         try {
-            const response = await axios.delete(`/matching/queue/${userId}`);
-            return response.data;
+          const { data } = await axios.delete(MATCHING_API.CANCEL(requestId));
+          return data;
         } catch (error) {
-            throw new Error(error.response?.data?.error || 'Failed to leave queue');
+          throw new Error(error.response?.data?.error || 'Failed to cancel match');
         }
-    }
+      }
+    
+      async getStatus(requestId) {
+        try {
+          const { data } = await axios.get(MATCHING_API.STATUS(requestId));
+          return data; // { status, roomId, partnerUsername, ... }
+        } catch (error) {
+          throw new Error(error.response?.data?.error || 'Failed to get matching status');
+        }
+      }
 
     // Create collaboration session (microservice API)
     async createSession(payload) {
@@ -68,7 +70,7 @@ class CollaborationService {
     // Get session details
     async getSession(sessionId) {
         try {
-            const response = await axios.get(`/collaboration/session/${sessionId}`);
+            const response = await axios.get(`/collaboration/session/${sessionId.replace(/^room:/, '')}`);
             return response.data;
         } catch (error) {
             throw new Error(error.response?.data?.error || 'Failed to get session');
@@ -91,7 +93,7 @@ class CollaborationService {
     // End session
     async endSession(sessionId) {
         try {
-            const response = await axios.put(`/collaboration/session/${sessionId}/end`);
+            const response = await axios.put(`/collaboration/session/${sessionId.replace(/^room:/, '')}/end`);
             return response.data;
         } catch (error) {
             throw new Error(error.response?.data?.error || 'Failed to end session');
@@ -111,18 +113,26 @@ class CollaborationService {
     // Socket methods for real-time collaboration
     joinSession(sessionId, userId, username) {
         if (!this.socket) this.initializeSocket();
+        console.log('Attempting to join session:', { sessionId, userId, username, connected: this.isConnected });
         this.socket.emit('join-session', { sessionId, userId, username });
     }
 
     sendCodeChange(sessionId, code, language) {
+        console.log('Sending code change:', { sessionId, connected: this.isConnected, codeLength: code.length });
         if (this.socket && this.isConnected) {
-            this.socket.emit('code-change', { sessionId, code, language });
+            const norm = String(sessionId).replace(/^room:/, '');
+            this.socket.emit('code-change', { sessionId: norm, code, language });
+        } else {
+            console.warn('⚠️ Cannot send code change - socket not connected');
         }
     }
 
     sendChatMessage(sessionId, message) {
+        console.log('Sending chat message:', { sessionId, connected: this.isConnected, message });
         if (this.socket && this.isConnected) {
             this.socket.emit('chat-message', { sessionId, message });
+        } else {
+            console.warn('⚠️ Cannot send chat message - socket not connected');
         }
     }
 
@@ -142,7 +152,7 @@ class CollaborationService {
     onMatchFound(callback) {
         if (!this.socket) this.initializeSocket();
         this.socket.on('match-found', (data) => {
-            console.log('🔔 WebSocket match-found event received by socket:', this.socket.id, 'Data:', data);
+            console.log('WebSocket match-found event received by socket:', this.socket.id, 'Data:', data);
             callback(data);
         });
     }
@@ -159,11 +169,13 @@ class CollaborationService {
 
     onCodeUpdated(callback) {
         if (!this.socket) this.initializeSocket();
+        console.log('Setting up code-updated listener');
         this.socket.on('code-updated', callback);
     }
 
     onChatMessage(callback) {
         if (!this.socket) this.initializeSocket();
+        console.log('Setting up chat-message listener');
         this.socket.on('chat-message', callback);
     }
 

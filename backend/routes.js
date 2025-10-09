@@ -1,8 +1,10 @@
+
 const router = require('express').Router();
 const { getQuestions, getQuestionById, getRandomQuestion, getTopics } = require('./controller/questionController');
 const Auth = require("./controller/authController");
 const { getUserById } = require('./controller/userController')
 const { authMiddleware } = require("./middleware/auth");
+const Matching = require("./controller/matchingController");
 
 const { 
     createSession, 
@@ -35,10 +37,8 @@ router.put("/collaboration/session/:sessionId/code", updateSessionCode);
 router.put("/collaboration/session/:sessionId/end", endSession);
 router.get("/collaboration/user/:userId/session", getUserSession);
 
-// Mock matching service routes (REMOVE IN PRODUCTION - for testing only)
-// router.post("/matching/queue", joinMatchingQueue);
-// router.delete("/matching/queue/:userId", leaveMatchingQueue);
-// router.get("/matching/queue/status", getQueueStatus);
-// router.post("/matching/users", createMockUser);
+router.post("/matching/start", authMiddleware, Matching.start);
+router.get("/matching/:requestId/status", authMiddleware, Matching.status);
+router.delete("/matching/:requestId/cancel", authMiddleware, Matching.cancel);
 
 module.exports = router;
