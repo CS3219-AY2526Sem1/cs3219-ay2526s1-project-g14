@@ -10,7 +10,7 @@ class SocketService {
     initialize(server) {
         this.io = new Server(server, {
             cors: {
-                origin: process.env.FRONTEND_URL || "http://localhost:3000",
+                origin: ["http://localhost:3000", "http://localhost:3001", process.env.FRONTEND_URL].filter(Boolean),
                 methods: ["GET", "POST"]
             }
         });
@@ -78,8 +78,10 @@ class SocketService {
             socket.on('code-change', async (data) => {
                 try {
                     const { sessionId, code, language } = data;
+                    console.log('💻 Received code change:', { sessionId, codeLength: code.length, language, from: socket.username });
                     
                     if (socket.sessionId !== sessionId) {
+                        console.log('❌ Code change rejected - not in session');
                         socket.emit('error', { message: 'Not in this session' });
                         return;
                     }
@@ -91,6 +93,7 @@ class SocketService {
                     );
 
                     // Broadcast to other participants
+                    console.log('📡 Broadcasting code update to room:', sessionId);
                     socket.to(sessionId).emit('code-updated', {
                         code,
                         language,
@@ -107,8 +110,10 @@ class SocketService {
             socket.on('chat-message', async (data) => {
                 try {
                     const { sessionId, message } = data;
+                    console.log('💬 Received chat message:', { sessionId, message, from: socket.username });
                     
                     if (socket.sessionId !== sessionId) {
+                        console.log('❌ Chat message rejected - not in session');
                         socket.emit('error', { message: 'Not in this session' });
                         return;
                     }
@@ -127,6 +132,7 @@ class SocketService {
                     );
 
                     // Broadcast to all participants (including sender)
+                    console.log('📡 Broadcasting chat message to room:', sessionId);
                     this.io.to(sessionId).emit('chat-message', chatMessage);
 
                 } catch (error) {

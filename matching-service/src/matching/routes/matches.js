@@ -34,28 +34,23 @@ r.post("/matches", async (req, res) => {
 
     const requestId = `req_${randomUUID()}`;
 
-    // lock per user
     const gotLock = await acquireUserLock(userId, requestId);
     if (!gotLock) {
       return res.status(409).json({ error: "user already searching or matched" });
     }
 
-    // Atomically match or enqueue
     const now = Date.now();
     const counterpartReqId = await pairOrEnqueueAtomic(requestId, userId, username, difficulty, topic, now);
 
     if (counterpartReqId) {
-      // We have a counterpart; fetch both sides to build collab payload
       const thisReq = await getRequest(requestId);
       const thatReq = await getRequest(counterpartReqId);
 
-      // Build the collaboration session creation payload
       const users = [
         { userId: thisReq?.userId || userId, username },
         { userId: thatReq?.userId || "unknown", username: thatReq?.username || "Partner" }
       ];
 
-      // You can optionally fetch a real question here and pass as questionData.
       let sessionId = `room:${requestId}`;
       try {
         const createResp = await axios.post(`${COLLAB_URL}/collaboration/session`, {
@@ -69,23 +64,19 @@ r.post("/matches", async (req, res) => {
         console.warn("Collab session creation failed, using fallback room:", err?.response?.data || err?.message);
       }
 
-      // Save partner + sessionId on both requests
       await setRequestFields(requestId, {
         status: "MATCHED",
-        partnerUsername: thatReq?.username || "Partner",
         roomId: sessionId,
         topic,
         difficulty
       });
       await setRequestFields(counterpartReqId, {
         status: "MATCHED",
-        partnerUsername: username,
         roomId: sessionId,
         topic,
         difficulty
       });
 
-      // Release both locks so users can start again
       if (thisReq?.userId) await releaseUserLock(thisReq.userId);
       if (thatReq?.userId) await releaseUserLock(thatReq.userId);
 
@@ -97,7 +88,6 @@ r.post("/matches", async (req, res) => {
       });
     }
 
-    // Still searching
     return res.status(202).json({
       requestId,
       status: "SEARCHING",
@@ -123,7 +113,6 @@ r.get("/matches/:requestId", async (req, res) => {
     if (reqHash.status === "SEARCHING" && ageMs >= MATCH_TTL_SECONDS * 1000) {
       reqHash.status = "TIMEOUT";
       await setRequestStatus(requestId, "TIMEOUT");
-      // Also remove from queue and release user lock
       try {
         if (reqHash.difficulty && reqHash.topic) {
           await require("../queue/redisMatchingQueue").removeFromQueue(requestId, reqHash.difficulty, reqHash.topic);

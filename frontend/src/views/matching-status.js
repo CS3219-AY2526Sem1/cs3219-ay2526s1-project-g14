@@ -1,12 +1,16 @@
 import React, { useEffect, useState } from "react";
 import axios from "../config/axios";
 import { MATCHING_API } from "../constants/api";
-import { useLocation } from "react-router-dom";
-import { Box, LinearProgress, Typography, Button } from "@mui/material";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Box, LinearProgress, Typography, Button, Alert } from "@mui/material";
+import collaborationService from "../services/collaborationService";
+import { useSelector } from "react-redux";
 
 export default function MatchingStatus() {
   const { search } = useLocation();
   const requestId = new URLSearchParams(search).get("rid");
+  const navigate = useNavigate();
+  const userId = useSelector((state) => state.auth.id);
 
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState("SEARCHING"); // SEARCHING|MATCHED|TIMEOUT|CANCELLED
@@ -15,6 +19,9 @@ export default function MatchingStatus() {
   const [topic, setTopic] = useState("");
   const [difficulty, setDifficulty] = useState("");
   const [currentMessage, setCurrentMessage] = useState("");
+  const [countdown, setCountdown] = useState(5);
+  const [isMatched, setIsMatched] = useState(false);
+  const [countdownStarted, setCountdownStarted] = useState(false);
 
   // loading messages
   const messages = [
@@ -31,7 +38,7 @@ export default function MatchingStatus() {
   useEffect(() => {
     setCurrentMessage(messages[Math.floor(Math.random() * messages.length)]);
     const rotate = () => {
-      const delay = 3000 + Math.random() * 2000; // 3–5s random
+      const delay = 5000
       const t = setTimeout(() => {
         setCurrentMessage(messages[Math.floor(Math.random() * messages.length)]);
         rotate();
@@ -52,18 +59,25 @@ export default function MatchingStatus() {
   }, []);
 
   useEffect(() => {
+    if (isMatched) return; // Stop polling once matched
     let alive = true;
     const poll = async () => {
       try {
         const { data } = await axios.get(MATCHING_API.STATUS(requestId));
         if (!alive) return;
         setStatus(data.status);
-        if (data.partnerUsername) setPartnerUsername(data.partnerUsername);
         if (data.roomId) setRoomId(data.roomId);
         if (data.topic) setTopic(data.topic);
         if (data.difficulty) setDifficulty(data.difficulty);
+        if (data.status === "MATCHED" && data.roomId && !isMatched) {
+          setStatus("MATCHED");
+          setIsMatched(true);
+          if (!countdownStarted) {
+            setCountdown(5);
+            setCountdownStarted(true);
+          }
+        }
       } catch {
-        /* ignore transient network errors */
       }
     };
     poll();
@@ -72,7 +86,56 @@ export default function MatchingStatus() {
       alive = false;
       clearInterval(t);
     };
-  }, [requestId]);
+  }, [requestId, isMatched, countdownStarted]);
+
+  // Listen for sessionCreated WebSocket event
+  useEffect(() => {
+    collaborationService.initializeSocket();
+    
+    const handleSessionCreated = (data) => {
+      console.log('MatchingStatus received sessionCreated event:', data);
+      // Check if this session is for the current user
+      const isForCurrentUser = data.participants && userId && data.participants.includes(userId);
+      if (isForCurrentUser && status === "SEARCHING" && !isMatched) {
+        console.log('Session created for current user, updating status');
+        setStatus("MATCHED");
+        setRoomId(data.sessionId);
+        setTopic(data.topic);
+        setDifficulty(data.difficulty);
+        setIsMatched(true);
+        if (!countdownStarted) {
+          setCountdown(5);
+          setCountdownStarted(true);
+        }
+      }
+    };
+
+    collaborationService.socket?.on('sessionCreated', handleSessionCreated);
+    
+    return () => {
+      collaborationService.socket?.off('sessionCreated', handleSessionCreated);
+    };
+  }, [userId, status, isMatched, countdownStarted]);
+
+  // countdown timer for auto-redirect
+  useEffect(() => {
+    if (!isMatched || !roomId || !countdownStarted) return;
+
+    let currentCount = 5;
+    setCountdown(currentCount);
+
+    const timer = setInterval(() => {
+      currentCount -= 1;
+      setCountdown(currentCount);
+      
+      if (currentCount <= 0) {
+        clearInterval(timer);
+        navigate(`/collaboration/${roomId}`);
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [isMatched, roomId, navigate, countdownStarted]);
 
   // cancel match request
   const cancel = async () => {
@@ -80,7 +143,6 @@ export default function MatchingStatus() {
       await axios.delete(MATCHING_API.CANCEL(requestId));
       setStatus("CANCELLED");
     } catch {
-      /* ignore */
     }
   };
 
@@ -112,8 +174,12 @@ export default function MatchingStatus() {
         </>
       )}
 
-      {status === "MATCHED" && (
+      {status === "MATCHED" && isMatched && (
         <Box sx={{ mt: 4 }}>
+          <Alert severity="success" sx={{ mb: 3 }}>
+            🎉 Match found! You've been paired with another user.
+          </Alert>
+          
           <Typography variant="h6" gutterBottom>
             🧩 Match Details
           </Typography>
@@ -122,12 +188,17 @@ export default function MatchingStatus() {
           <Typography>Difficulty: <strong>{difficulty || "N/A"}</strong></Typography>
 
           <Button
-            sx={{ mt: 3 }}
-            variant="outlined"
-            disabled
+            sx={{ mt: 3, mb: 2 }}
+            variant="contained"
+            color="primary"
+            onClick={() => navigate(`/collaboration/${roomId}`)}
           >
             Go to Collaboration
           </Button>
+          
+          <Typography variant="body2" color="text.secondary">
+            Redirecting in {countdown}...
+          </Typography>
         </Box>
       )}
 

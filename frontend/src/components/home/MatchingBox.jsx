@@ -118,36 +118,10 @@ export default function MatchingBox({
         }
   
         setRequestId(rid);
-  
-        if (data?.status === "MATCHED" && data?.roomId) {
-          setMatchingStatus("matched");
-          setLoading(false);
-          navigate(`/collaboration/${data.roomId}`);
-          return;
-        }
-  
-        // else: SEARCHING → set waiting + start polling as a fallback
-        setMatchingStatus("waiting");
-        pollRef.current = setInterval(async () => {
-          try {
-            const st = await collaborationService.getStatus(rid);
-            if (st?.status === "MATCHED" && st?.roomId) {
-              setMatchingStatus("matched");
-              setLoading(false);
-              clearInterval(pollRef.current);
-              pollRef.current = null;
-              navigate(`/collaboration/${st.roomId}`);
-            } else if (st?.status === "TIMEOUT") {
-              setMatchingStatus(null);
-              setLoading(false);
-              setError("Match timed out. Please try again.");
-              clearInterval(pollRef.current);
-              pollRef.current = null;
-            }
-          } catch (e) {
-            // ignore transient errors
-          }
-        }, 2000);
+
+        // Always navigate to status page first, regardless of immediate match
+        setLoading(false);
+        navigate(`/match?rid=${encodeURIComponent(rid)}`);
       } catch (err) {
         console.error(err);
         setError(err.message || "Failed to start matching");

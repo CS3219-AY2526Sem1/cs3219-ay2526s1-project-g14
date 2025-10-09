@@ -64,6 +64,7 @@ export default function CollaborationSession() {
             setPartner(partnerData.userId._id);
             
             // Join socket room
+            console.log('Joining socket room:', { sessionId, userId, username });
             collaborationService.joinSession(sessionId, userId, username);
             
         } catch (err) {
@@ -74,6 +75,7 @@ export default function CollaborationSession() {
     };
 
     const setupSocketListeners = () => {
+        console.log('Setting up socket listeners for session:', sessionId);
         collaborationService.onSessionState((data) => {
             console.log('Session state received:', data);
             setConnectedUsers(data.connectedUsers || 0);
@@ -88,15 +90,18 @@ export default function CollaborationSession() {
         });
 
         collaborationService.onCodeUpdated((data) => {
+            console.log('Code updated:', data);
             setCode(data.code);
             setLanguage(data.language);
         });
 
         collaborationService.onChatMessage((message) => {
+            console.log('Chat message received:', message);
             setChatMessages(prev => [...prev, message]);
         });
 
         collaborationService.onSessionEnded((data) => {
+            console.log('Session ended:', data);
             alert(`Session ended by ${data.endedBy}`);
             navigate('/');
         });
@@ -108,7 +113,6 @@ export default function CollaborationSession() {
             setNewMessage('');
         }
     };
-
     const handleEndSession = async () => {
         if (window.confirm('Are you sure you want to end this session?')) {
             try {
