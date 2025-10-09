@@ -22,6 +22,7 @@ export default function MatchingStatus() {
   const [countdown, setCountdown] = useState(5);
   const [isMatched, setIsMatched] = useState(false);
   const [countdownStarted, setCountdownStarted] = useState(false);
+  const [timeoutCountdown, setTimeoutCountdown] = useState(5);
 
   // loading messages
   const messages = [
@@ -57,6 +58,20 @@ export default function MatchingStatus() {
     const t = setInterval(() => setProgress((p) => Math.min(100, p + inc)), step);
     return () => clearInterval(t);
   }, []);
+
+    // when progress reaches 100% and still not matched → TIMEOUT
+    useEffect(() => {
+      if (progress >= 100 && status === "SEARCHING" && !isMatched) {
+        (async () => {
+          try {
+            // best-effort: remove from queue server-side
+            await axios.delete(MATCHING_API.CANCEL(requestId));
+          } catch {}
+          setStatus("TIMEOUT");
+          setTimeoutCountdown(5);
+        })();
+      }
+    }, [progress, status, isMatched, requestId]);
 
   useEffect(() => {
     if (isMatched) return; // Stop polling once matched
@@ -117,7 +132,7 @@ export default function MatchingStatus() {
     };
   }, [userId, status, isMatched, countdownStarted]);
 
-  // countdown timer for auto-redirect
+  // countdown timer for auto-redirect AFTER MATCHED
   useEffect(() => {
     if (!isMatched || !roomId || !countdownStarted) return;
 
@@ -136,6 +151,24 @@ export default function MatchingStatus() {
 
     return () => clearInterval(timer);
   }, [isMatched, roomId, navigate, countdownStarted]);
+
+    // countdown timer for auto-redirect AFTER TIMEOUT
+    useEffect(() => {
+      if (status !== "TIMEOUT") return;
+  
+      let current = 5;
+      setTimeoutCountdown(current);
+      const timer = setInterval(() => {
+        current -= 1;
+        setTimeoutCountdown(current);
+        if (current <= 0) {
+          clearInterval(timer);
+          navigate("/");
+        }
+      }, 1000);
+  
+      return () => clearInterval(timer);
+    }, [status, navigate]);
 
   // cancel match request
   const cancel = async () => {
@@ -202,7 +235,21 @@ export default function MatchingStatus() {
         </Box>
       )}
 
-      {(status === "TIMEOUT" || status === "CANCELLED") && (
+      {status === "TIMEOUT" && (
+        <Box sx={{ mt: 4 }}>
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            No match found within 60 seconds. Please try again.
+          </Alert>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            Redirecting to home in {timeoutCountdown}...
+          </Typography>
+          <Button variant="outlined" onClick={() => navigate("/")}>
+            Go to Home
+          </Button>
+        </Box>
+      )}
+
+      {(status === "CANCELLED") && (
         <Button sx={{ mt: 3 }} onClick={() => window.history.back()}>
           Back to Home
         </Button>
