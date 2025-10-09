@@ -10,7 +10,7 @@ class SocketService {
     initialize(server) {
         this.io = new Server(server, {
             cors: {
-                origin: ["http://localhost:3000", "http://localhost:3001", process.env.FRONTEND_URL].filter(Boolean),
+                origin: process.env.FRONTEND_URL || "http://localhost:3000",
                 methods: ["GET", "POST"]
             }
         });
@@ -31,7 +31,7 @@ class SocketService {
                     }
 
                     // Check if user is participant
-                    const isParticipant = session.participants.some(p => p.userId.toString() === userId);
+                    const isParticipant = session.participants.some(p => p.userId.toString() === String(userId));
                     if (!isParticipant) {
                         socket.emit('error', { message: 'Not authorized for this session' });
                         return;
@@ -61,11 +61,17 @@ class SocketService {
                         username,
                         message: `${username} joined the session`
                     });
+                    const populated = await Session.findOne({ sessionId })
+                        .populate('participants.userId', 'username');
 
+                    const connected = (populated.participants || []).map(p => ({
+                    id: String(p.userId._id),
+                    username: p.userId.username,
+                    }));
                     // Send current session state
                     socket.emit('session-state', {
                         session,
-                        connectedUsers: Array.from(this.sessions.get(sessionId)).length
+                        connectedUsers: connected
                     });
 
                 } catch (error) {
@@ -78,10 +84,10 @@ class SocketService {
             socket.on('code-change', async (data) => {
                 try {
                     const { sessionId, code, language } = data;
-                    console.log('💻 Received code change:', { sessionId, codeLength: code.length, language, from: socket.username });
+                    console.log('Received code change:', { sessionId, codeLength: code.length, language, from: socket.username });
                     
                     if (socket.sessionId !== sessionId) {
-                        console.log('❌ Code change rejected - not in session');
+                        console.log('Code change rejected - not in session');
                         socket.emit('error', { message: 'Not in this session' });
                         return;
                     }
@@ -93,7 +99,7 @@ class SocketService {
                     );
 
                     // Broadcast to other participants
-                    console.log('📡 Broadcasting code update to room:', sessionId);
+                    console.log('Broadcasting code update to room:', sessionId);
                     socket.to(sessionId).emit('code-updated', {
                         code,
                         language,
@@ -110,10 +116,10 @@ class SocketService {
             socket.on('chat-message', async (data) => {
                 try {
                     const { sessionId, message } = data;
-                    console.log('💬 Received chat message:', { sessionId, message, from: socket.username });
+                    console.log('Received chat message:', { sessionId, message, from: socket.username });
                     
                     if (socket.sessionId !== sessionId) {
-                        console.log('❌ Chat message rejected - not in session');
+                        console.log('Chat message rejected- not in session');
                         socket.emit('error', { message: 'Not in this session' });
                         return;
                     }
@@ -132,7 +138,7 @@ class SocketService {
                     );
 
                     // Broadcast to all participants (including sender)
-                    console.log('📡 Broadcasting chat message to room:', sessionId);
+                    console.log('Broadcasting chat message to room:', sessionId);
                     this.io.to(sessionId).emit('chat-message', chatMessage);
 
                 } catch (error) {

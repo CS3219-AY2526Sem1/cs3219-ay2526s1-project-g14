@@ -6,11 +6,15 @@ import { Box, LinearProgress, Typography, Button, Alert } from "@mui/material";
 import collaborationService from "../services/collaborationService";
 import { useSelector } from "react-redux";
 
+const selectUsername = (s) => s.auth.username;
+const selectUserId   = (s) => s.auth.id;
+
 export default function MatchingStatus() {
   const { search } = useLocation();
   const requestId = new URLSearchParams(search).get("rid");
   const navigate = useNavigate();
-  const userId = useSelector((state) => state.auth.id);
+  const userId   = useSelector(selectUserId);      // may be undefined
+  const username = useSelector(selectUsername);  
 
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState("SEARCHING"); // SEARCHING|MATCHED|TIMEOUT|CANCELLED
@@ -35,6 +39,36 @@ export default function MatchingStatus() {
     "Just a few more seconds...",
     "Checking available matches...",
   ];
+
+  const getPartnerUsername = async (sId, myId, myUsername) => {
+    try {
+      const res = await collaborationService.getSession(sId);
+      const sess = res.payload;
+      if (!sess?.participants?.length) return "";
+
+      const parts = sess.participants.map(p => p?.userId).filter(Boolean);
+
+      // find me first
+      const meById =
+        myId && parts.find(u => String(u._id) === String(myId));
+      const meByName =
+        !meById && myUsername
+          ? parts.find(
+              u => (u.username || "").toLowerCase() === myUsername.toLowerCase()
+            )
+          : null;
+      const myActualId = String(meById?._id || meByName?._id || "");
+
+      // find the other person
+      const partner = parts.find(u => String(u._id) !== myActualId);
+      return partner?.username || "";
+    } catch (err) {
+      console.error("Error retrieving partner username", err);
+      return "";
+    }
+  };
+
+    
 
   useEffect(() => {
     setCurrentMessage(messages[Math.floor(Math.random() * messages.length)]);
@@ -87,6 +121,8 @@ export default function MatchingStatus() {
         if (data.status === "MATCHED" && data.roomId && !isMatched) {
           setStatus("MATCHED");
           setIsMatched(true);
+          const uname = await getPartnerUsername(data.roomId, userId, username);
+          if (uname) setPartnerUsername(uname);
           if (!countdownStarted) {
             setCountdown(5);
             setCountdownStarted(true);
@@ -107,23 +143,25 @@ export default function MatchingStatus() {
   useEffect(() => {
     collaborationService.initializeSocket();
     
-    const handleSessionCreated = (data) => {
+    const handleSessionCreated = async (data) => {
       console.log('MatchingStatus received sessionCreated event:', data);
       // Check if this session is for the current user
-      const isForCurrentUser = data.participants && userId && data.participants.includes(userId);
-      if (isForCurrentUser && status === "SEARCHING" && !isMatched) {
-        console.log('Session created for current user, updating status');
-        setStatus("MATCHED");
-        setRoomId(data.sessionId);
-        setTopic(data.topic);
-        setDifficulty(data.difficulty);
-        setIsMatched(true);
-        if (!countdownStarted) {
-          setCountdown(5);
-          setCountdownStarted(true);
-        }
-      }
-    };
+      const isForCurrentUser = Array.isArray(data.participants)
+      && (userId
+           ? data.participants.map(String).includes(String(userId))
+           : true); // if id missing, still try (we’ll verify via session fetch)
+  
+    if (isForCurrentUser && status === "SEARCHING" && !isMatched) {
+      setStatus("MATCHED");
+      setRoomId(data.sessionId);
+      setTopic(data.topic);
+      setDifficulty(data.difficulty);
+      const uname = await getPartnerUsername(data.sessionId, userId, username);
+      if (uname) setPartnerUsername(uname);
+      setIsMatched(true);
+      if (!countdownStarted) { setCountdown(5); setCountdownStarted(true); }
+    }
+  };
 
     collaborationService.socket?.on('sessionCreated', handleSessionCreated);
     

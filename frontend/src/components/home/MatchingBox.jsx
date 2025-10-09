@@ -1,5 +1,3 @@
-import axios from "../../config/axios";
-import { MATCHING_API } from "../../constants/api";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
@@ -34,28 +32,28 @@ export default function MatchingBox({
 
         // Listen for match found
         collaborationService.onMatchFound((data) => {
-            console.log('🎯 MatchingBox received match-found event for user:', username, userId);
-            console.log('🎯 Match data:', data);
+            console.log('MatchingBox received match-found event for user:', username, userId);
+            console.log('Match data:', data);
             
             // Check if this match is for the current user
             const isForCurrentUser = data.users && userId && data.users.some(user => user.userId === userId);
-            console.log('🎯 Is this match for current user?', isForCurrentUser);
+            console.log('Is this match for current user?', isForCurrentUser);
             
             if (isForCurrentUser) {
-                console.log('✅ Match confirmed for user:', username);
+                console.log('Match confirmed for user:', username);
                 setMatchingStatus('matched');
                 setLoading(false);
                 setError(null); // Clear any previous errors
                 
                 // Navigate to collaboration session
-                console.log('🚀 Navigating to collaboration session:', data.sessionId);
+                console.log('Navigating to collaboration session:', data.sessionId);
                 setTimeout(() => {
                     navigate(`/collaboration/${data.sessionId}`);
                 }, 2000);
             } else {
-                console.log('❌ Match not for current user, ignoring');
-                console.log('❌ Current user ID:', userId);
-                console.log('❌ Match user IDs:', data.users?.map(u => u.userId));
+                console.log('Match not for current user, ignoring');
+                console.log('Current user ID:', userId);
+                console.log('Match user IDs:', data.users?.map(u => u.userId));
             }
         });
 
@@ -76,35 +74,12 @@ export default function MatchingBox({
             return;
         }
 
-        console.log('🚀 Starting match with user:', username);
+        console.log('Starting match with user:', username);
         setLoading(true);
         setError(null);
         setMatchingStatus(null);
         
-    //     try {
-    //         const result = await collaborationService.joinQueue(
-    //             userId,
-    //             username,
-    //             selectedDifficulty,
-    //             selectedTopic
-    //         );
 
-    //         if (result.payload.matched) {
-    //             // Immediate match found
-    //             setMatchingStatus('matched');
-    //             setTimeout(() => {
-    //                 navigate(`/collaboration/${result.payload.sessionId}`);
-    //             }, 2000);
-    //         } else {
-    //             // Added to queue, waiting for match
-    //             setMatchingStatus('waiting');
-    //         }
-    //     } catch (err) {
-    //         console.error(err);
-    //         setError(err.message);
-    //         setLoading(false);
-    //     }
-    // };
     try {
         const data = await collaborationService.joinQueue({
           topic: selectedTopic,
@@ -128,26 +103,7 @@ export default function MatchingBox({
         setLoading(false);
       }
     };
-
-    // const handleCancelMatching = async () => {
-    //     console.log('Cancel matching clicked');
-    //     if (userId) {
-    //         console.error('No userId available');
-    //         return;
-    //     }
-        
-    //     try {
-    //         console.log(' Leaving queue for user:', userId);
-    //         await collaborationService.leaveQueue(userId);
-    //         setMatchingStatus(null);
-    //         setLoading(false);
-    //         setError(null);
-    //         console.log('✅ Successfully left queue');
-    //     } catch (err) {
-    //         console.error('❌ Error leaving queue:', err);
-    //         setError(err.message);
-    //     }
-    // };
+    
     const handleCancelMatching = async () => {
         if (!requestId) {
           console.error("No requestId to cancel");

@@ -18,7 +18,7 @@ export default function CollaborationSession() {
     const navigate = useNavigate();
 
     const username = useSelector((state) => state.auth.username);
-    const userId = useSelector((state) => state.auth.id);
+    const reduxUserId = useSelector((state) => state.auth.id);
 
     // Session state
     const [session, setSession] = useState(null);
@@ -36,7 +36,7 @@ export default function CollaborationSession() {
     
     // Connection state
     const [connectedUsers, setConnectedUsers] = useState([]);
-    const [partner, setPartner] = useState(null);
+    const [partnerUser, setPartnerUser] = useState(null);
     
     useEffect(() => {
         loadSession();
@@ -60,12 +60,23 @@ export default function CollaborationSession() {
             setChatMessages(sessionData.chatHistory || []);
             
             // Find partner
-            const partnerData = sessionData.participants.find(p => p.userId._id !== userId);
-            setPartner(partnerData.userId._id);
-            
+            const parts = (sessionData.participants || []).map(p => p?.userId).filter(Boolean);
+            const myIdFromRedux = reduxUserId ? String(reduxUserId) : null;
+            const myById   = myIdFromRedux && parts.find(u => String(u._id) === myIdFromRedux);
+            const myByName = !myById && username
+                ? parts.find(u => (u.username || '').toLowerCase() === username.toLowerCase())
+                : null;
+
+            const myId = String(myById?._id || myByName?._id || '');
+            const partnerObj = parts.find(u => String(u._id) !== myId) || null;
+            setPartnerUser(partnerObj);
+
+
             // Join socket room
-            console.log('Joining socket room:', { sessionId, userId, username });
-            collaborationService.joinSession(sessionId, userId, username);
+            const myJoinId = myId || myIdFromRedux || '';
+            console.log('Joining socket room:', { sessionId, userId: myJoinId, username });
+            collaborationService.joinSession(sessionId, myJoinId, username);
+
             
         } catch (err) {
             setError(err.message);
@@ -155,7 +166,7 @@ export default function CollaborationSession() {
             }}
         >
             <TopBar
-                partner={partner}
+                partner={{ username: partnerUser?.username || 'Unknown', id: partnerUser?._id || '' }}
                 startTime={session.startTime}
                 connectedUsers={connectedUsers}
                 handleEndSession={handleEndSession}
@@ -198,7 +209,14 @@ export default function CollaborationSession() {
                         flexDirection: "column",
                         overflow: "hidden",rBottom: "1px solid #eee"
                     }}>
-                        <CodeEditorPanel sessionId={sessionId} code={code} language={language} />
+                        <CodeEditorPanel sessionId={sessionId} code={code} language={language} 
+                          onCodeChange={(newCode) => {
+                            collaborationService.sendCodeChange(sessionId, newCode, language);
+                          }}
+                          onLanguageChange={(newLang) => {
+                            setLanguage(newLang);
+                            collaborationService.sendCodeChange(sessionId, code, newLang);
+                          }}/>
                     </Box>
 
                     <Box sx={{
@@ -213,7 +231,7 @@ export default function CollaborationSession() {
                     }}>
                         <ChatPanel
                             chatMessages={chatMessages}
-                            userId={userId}
+                            userId={reduxUserId}
                             newMessage={newMessage}
                             setNewMessage={setNewMessage}
                             handleSendMessage={handleSendMessage}
