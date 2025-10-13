@@ -1,0 +1,70 @@
+@startuml Database structure
+
+' avoid problems with angled crows feet
+
+entity "User" as user {
+    *user_id: number <<generated>>
+    --
+    *username: text
+    *email: text
+    *role: RoleEnum
+}
+
+entity "Questions" as questions {
+    *question_id: number
+    --
+    *title: text
+    *description: text
+    *difficulty: DifficultyEnum
+    *topic: [text]
+    *examples: [text]
+    time_created: datetime
+    time_updated: datetime
+}
+
+entity "Session" as session {
+    *session_id: number <<generated>>
+    --
+    *user_id: [number (FK → User)]
+    *question_id: number (FK → Questions)
+    *start_time: datetime
+    *end_time: datetime
+    *status: StatusEnum
+}
+
+' Enums
+enum DifficultyEnum {
+    Easy
+    Medium
+    Hard
+}
+
+enum StatusEnum {
+    Not started
+    In progress
+    Completed
+}
+
+enum RoleEnum {
+    Student
+    Admin
+}
+
+session::_id ||--|{ user::user_id
+questions::_id ||--o{ session::question_id
+
+' Link fields to enums
+user::role -- RoleEnum
+questions::difficulty -- DifficultyEnum
+session::status -- StatusEnum
+
+legend right
+    == Legend ==
+    *field : compulsory / not null
+    field : optional / nullable
+
+    PK : Primary Key
+    FK : Foreign Key
+endlegend
+
+@enduml
