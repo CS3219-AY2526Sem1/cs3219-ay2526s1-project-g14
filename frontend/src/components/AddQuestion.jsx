@@ -10,6 +10,7 @@ import {
     Collapse,
     Autocomplete
 } from "@mui/material";
+import IconButton from '@mui/material/IconButton';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { PlayArrow as PlayArrowIcon } from '@mui/icons-material';
@@ -139,46 +140,50 @@ const AddQuestion = () => {
             </Typography>
 
             <Box component="form" display="flex" flexDirection="column" gap={3} onSubmit={handleSubmit}>
-                {/* Question ID */}
-                <Box flex={1}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>Question ID</Typography>
-                    <Chip
-                        label={form.questionId}
-                        sx={{
-                            fontSize: "1rem",
-                            fontWeight: "bold",
-                            bgcolor: "#EDF2FF",
-                            color: "#000",
-                            border: "1px solid #000",
-                            borderRadius: "8px",
-                            px: 1.5,
-                            py: 1,
-                            "& .MuiChip-label": { px: 1.5 },
-                        }}
-                    />
-                </Box>
+                <Box display="flex" flexDirection={{ xs: "column", sm: "row" }} gap={2}>
+                    {/* Question ID */}
+                    <Box flex={{ xs: "none", sm: 0.2 }} minWidth={{ sm: "100px" }}>
+                        <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>Question ID</Typography>
+                        <Chip
+                            label={form.questionId}
+                            sx={{
+                                fontSize: "1rem",
+                                fontWeight: "bold",
+                                bgcolor: "#EDF2FF",
+                                color: "#000",
+                                border: "1px solid #000",
+                                borderRadius: "8px",
+                                px: 1.5,
+                                py: 1,
+                                "& .MuiChip-label": { px: 1.5 },
+                            }}
+                        />
+                    </Box>
 
-                {/* Title */}
-                <Box flex={1}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>Title</Typography>
-                    <TextField
-                        name="title"
-                        value={form.title}
-                        onChange={handleChange}
-                        fullWidth
-                        required
-                    />
+                    {/* Title */}
+                    <Box flex={{ xs: 1, sm: 0.8 }}>
+                        <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>Title *</Typography>
+                        <TextField
+                            size="small"
+                            name="title"
+                            value={form.title}
+                            onChange={handleChange}
+                            fullWidth
+                            required
+                        />
+                    </Box>
                 </Box>
 
                 {/* Description */}
                 <Box flex={1}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>Description</Typography>
+                    <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>Description *</Typography>
                     <TextField
+                        size="small"
                         name="description"
                         value={form.description}
                         onChange={handleChange}
                         multiline
-                        rows={3}
+                        rows={2}
                         fullWidth
                         required
                     />
@@ -187,8 +192,9 @@ const AddQuestion = () => {
                 {/* Difficulty & Topic */}
                 <Box display="flex" flexDirection={{ xs: "column", sm: "row" }} gap={2}>
                     <Box flex={1}>
-                        <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>Difficulty</Typography>
+                        <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>Difficulty *</Typography>
                         <TextField
+                            size="small"
                             select
                             name="difficulty"
                             value={form.difficulty}
@@ -202,8 +208,9 @@ const AddQuestion = () => {
                     </Box>
 
                     <Box flex={1}>
-                        <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>Topic</Typography>
+                        <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>Topic *</Typography>
                         <Autocomplete
+                            size="small"
                             multiple
                             freeSolo
                             options={topics}
@@ -213,6 +220,7 @@ const AddQuestion = () => {
                             }
                             renderInput={(params) => (
                                 <TextField
+                                    size="small"
                                     {...params}
                                     fullWidth
                                     placeholder="Select or type topics"
@@ -227,20 +235,6 @@ const AddQuestion = () => {
                         <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
                             Examples
                         </Typography>
-                        <Button
-                            variant="outlined"
-                            size="small"
-                            onClick={addExample}
-                            sx={{
-                                ml: "auto",
-                                bgcolor: "#FFFFFF",
-                                borderColor: "#D6E0FF",
-                                color: "#000",
-                                "&:hover": { bgcolor: "#D6E0FF" },
-                            }}
-                        >
-                            <AddIcon/>
-                        </Button>
                     </Box>
 
                     {form.examples.map((ex, index) => (
@@ -249,61 +243,87 @@ const AddQuestion = () => {
                             variant="outlined"
                             sx={{ p: 2, mb: 2, bgcolor: "#f9f9f9" }}
                         >
-                        <Box
-                            display="flex"
-                            alignItems="center"
-                            gap={1}
-                            sx={{ cursor: "pointer" }}
-                            onClick={() => toggleExample(index)}
-                        >
-                            <PlayArrowIcon
-                                sx={{
-                                    transform: expandedExamples[index] ? "rotate(90deg)" : "rotate(0deg)",
-                                    transition: "transform 0.2s",
-                                }}
-                            />
-                            <Typography variant="subtitle2" sx={{ fontWeight: "bold" }}>
-                                Example {index + 1}
-                            </Typography>
-                                {form.examples.length > 1 && (
-                                <Button
-                                    size="small"
-                                    variant="outlined"
-                                    color="error"
-                                    sx={{ ml: "auto" }}
-                                    onClick={() => removeExample(index)}
-                                >
-                                    <DeleteIcon/>
-                                </Button>
-                                )}
-                        </Box>
-
-                        <Collapse in={expandedExamples[index]}>
-                            <Box mt={1} display="flex" flexDirection="column" gap={1}>
-                                <TextField
-                                    label="Input"
-                                    value={ex.input}
-                                    onChange={(e) => handleExampleChange(index, "input", e.target.value)}
-                                    fullWidth
-                                    required
+                            <Box
+                                display="flex"
+                                alignItems="center"
+                                gap={1}
+                                sx={{ cursor: "pointer" }}
+                                onClick={() => toggleExample(index)}
+                            >
+                                <PlayArrowIcon
+                                    sx={{
+                                        transform: expandedExamples[index] ? "rotate(90deg)" : "rotate(0deg)",
+                                        transition: "transform 0.2s",
+                                    }}
                                 />
-                                <TextField
-                                    label="Output"
-                                    value={ex.output}
-                                    onChange={(e) => handleExampleChange(index, "output", e.target.value)}
-                                    fullWidth
-                                    required
-                                />
+                                <Typography variant="subtitle2" sx={{ fontWeight: "bold" }}>
+                                    Example {index + 1}
+                                </Typography>
+                                    {form.examples.length > 1 && (
+                                    <IconButton aria-label="delete" sx={{ ml: "auto", color:"#FF746C" }} onClick={() => removeExample(index)}>
+                                        <DeleteIcon fontSize="small"/>
+                                    </IconButton>
+                                    )}
                             </Box>
-                        </Collapse>
+
+                            <Collapse in={expandedExamples[index]}>
+                                <Box mt={1} display="flex" flexDirection="column" gap={1}>
+                                    <TextField
+                                        size="small"
+                                        label="Input"
+                                        value={ex.input}
+                                        onChange={(e) => handleExampleChange(index, "input", e.target.value)}
+                                        fullWidth
+                                        required
+                                    />
+                                    <TextField
+                                        size="small"
+                                        label="Output"
+                                        value={ex.output}
+                                        onChange={(e) => handleExampleChange(index, "output", e.target.value)}
+                                        fullWidth
+                                        required
+                                    />
+                                </Box>
+                            </Collapse>
+                            
+                            <Box
+                                sx={{
+                                    display: "flex",
+                                    justifyContent: "center",
+                                    pt: 2, 
+                                }}
+                            >
+                                <Button
+                                    size="small"  
+                                    onClick={addExample}
+                                    sx={{
+                                        pt: "3",
+                                        minWidth: "32px", 
+                                        width: "32px",
+                                        height: "32px",
+                                        borderRadius: "50%", 
+                                        bgcolor: "#FFFFFF",
+                                        border: "1px solid #D6E0FF",
+                                        color: "#000",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        "&:hover": { bgcolor: "#D6E0FF" },
+                                    }}
+                                >
+                                    <AddIcon fontSize="small"/>
+                                </Button>
+                            </Box>
                         </Paper>
                     ))}
                 </Box>
 
                 {/* Image */}
                 <Box flex={1}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>Image URL</Typography>
+                    <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>Image URL (optional)</Typography>
                     <TextField
+                        size="small"
                         name="image"
                         value={form.image}
                         onChange={handleChange}
