@@ -5,6 +5,7 @@ import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
 import { PAGES } from "../constants/pages"
 import { handleLogout } from "../store/actions/auth"
 
@@ -13,6 +14,7 @@ const NavigationBar = () => {
     const dispatch = useDispatch();
     const location = useLocation();
     const username = useSelector((state) => state.auth.username);
+    const role = useSelector((state) => state.auth.role);
 
     // Get user from localStorage (set by UserSelector) or sessionStorage
     // useEffect(() => {
@@ -104,6 +106,20 @@ const NavigationBar = () => {
                 >
                     <Typography sx={{ fontSize: "1rem", fontWeight: "semibold" }}>Question List</Typography>
                 </a>
+                {role === "admin" && (
+                    <a
+                    href="/add-question"
+                    style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        textDecoration: "none",
+                        color: "black",
+                    }}
+                    >
+                    <Typography sx={{ fontSize: "1rem", fontWeight: "semibold" }}>Add Question</Typography>
+                    </a>
+                )}
             </Box>
 
             <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
@@ -113,6 +129,12 @@ const NavigationBar = () => {
                         {username || 'User'}
                     </Typography>
                 </Box>
+                {role === "admin" && (
+                    <Chip 
+                        label="Admin"
+                        sx={{ bgcolor: "#EDF2FF", color: "#000", border: "0.5px solid #000", fontWeight: "semibold"}}
+                    />
+                )}
                 <Button
                     variant="outlined"
                     onClick={onLogout}

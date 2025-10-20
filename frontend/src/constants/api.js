@@ -14,6 +14,8 @@ export const API = {
     QUESTIONS: "/questions",
     RANDOMQUESTION: "/questions/random-question",
     TOPICS: "/topics",
+    LASTQUESTIONID: "/last-question-id",
+    ADDQUESTION: "/add-question"
 };
 
 export const MATCHING_API = {

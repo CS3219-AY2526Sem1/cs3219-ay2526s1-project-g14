@@ -57,5 +57,17 @@ const sendOTPEmail = async (email, otp) => {
     }
 };
 
+const checkAdminRole = (req, res, next) => {
+    console.log("req", red)
+    if (!req.user) {
+        return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
 
-module.exports = { authMiddleware, generateToken, generateOtp, sendOTPEmail };
+    if (req.user.role !== "admin") {
+        return res.status(403).json({ success: false, message: "Access denied: Admins only" });
+    }
+
+    next();
+};
+
+module.exports = { authMiddleware, generateToken, generateOtp, sendOTPEmail, checkAdminRole };

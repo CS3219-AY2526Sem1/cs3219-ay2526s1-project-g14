@@ -72,3 +72,51 @@ exports.getRandomQuestion = async (req, res) => {
     }
 };
 
+exports.getLastQuestionId = async (req, res) => {
+    try {
+        const lastQuestion = await Question.findOne().sort({ questionId: -1 }).limit(1);
+        const lastId = lastQuestion ? lastQuestion.questionId : 0;
+        console.log("res", res)
+        console.log("lastQuestion", lastQuestion)
+
+        res.status(200).json({
+            success: true,
+            payload: { questionId: lastId },
+        });
+    } catch (err) {
+        console.error("Error fetching last question ID:", err);
+        res.status(500).json({
+            success: false,
+            error: err.message,
+        });
+    }
+};
+
+exports.addQuestion = async (req, res) => {
+    try {
+        const { questionId, title, description, difficulty, topic, examples, image } = req.body;
+
+        if (!questionId || !title || !difficulty || !topic) {
+            return res.status(400).json({ success: false, message: "Missing required fields" });
+        }
+
+        const newQuestion = new Question({
+            questionId,
+            title,
+            description,
+            difficulty,
+            topic,
+            examples,
+            image,
+        });
+
+        await newQuestion.save();
+
+        res.status(201).json({ success: true, message: "Question added successfully", payload: newQuestion });
+    } catch (err) {
+        console.error("Error adding question:", err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+};
+
+
