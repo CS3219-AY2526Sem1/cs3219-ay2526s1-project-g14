@@ -4,9 +4,9 @@ import { Box } from "@mui/material";
 export default function AlertBox({ message, setMessage }) {
     useEffect(() => {
         if (message) {
-        const timer = setTimeout(() => {
-            setMessage(null);
-        }, 3000);
+            const timer = setTimeout(() => {
+                setMessage(null);
+            }, 3000);
         return () => clearTimeout(timer);
         }
     }, [message, setMessage]);

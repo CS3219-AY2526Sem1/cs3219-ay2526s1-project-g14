@@ -114,7 +114,6 @@ const AddQuestion = () => {
             });
         } finally {
             setLoading(false);
-            setMessage(null)
         }
     };
 
