@@ -1,0 +1,173 @@
+.pageWrapper {
+  background-color: #f7f6ff;
+  min-height: 100vh;
+  padding: 16px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.statsCard {
+  background: #fff;
+  border-radius: 10px;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 160px;
+  box-shadow: 0 1px 4px rgba(100, 80, 180, 0.05);
+}
+
+.statsContent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.circleWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 140px;
+}
+
+.circleOuter {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.circleProgress {
+  color: #7b6eff !important;
+}
+
+.circleText {
+  position: absolute;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #2e2a4d;
+}
+
+.circleLabel {
+  font-size: 0.8rem;
+  color: #7b76a0;
+  margin-top: 4px;
+}
+
+.statsGrid {
+  margin-left: 30px;
+  flex: 1;
+  text-align: center;
+  justify-content: space-between;
+}
+
+.statValue {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2d2a4a;
+}
+
+.statLabel {
+  font-size: 0.8rem;
+  color: #7b76a0;
+}
+
+.historyCard {
+  background: #fff;
+  border-radius: 10px;
+  padding: 12px 20px;
+  box-shadow: 0 1px 4px rgba(100, 80, 180, 0.05);
+  height: 160px;
+}
+
+.title {
+  font-weight: 600;
+  color: #2e2a4d;
+  margin-bottom: 4px;
+}
+
+.attemptList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.attemptRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f6f4ff;
+  border-radius: 6px;
+  padding: 6px 10px;
+}
+
+.attemptQuestion {
+  color: #332e63;
+  font-size: 0.85rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 75%;
+}
+
+.pass {
+  color: #2ecc71;
+  font-weight: 600;
+}
+
+.fail {
+  color: #e74c3c;
+  font-weight: 600;
+}
+
+.leaderboardCard {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(100, 80, 180, 0.05);
+}
+
+.userRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: #f8f5ff;
+  margin-bottom: 4px;
+}
+
+.userRow:hover {
+  background: #ece7ff;
+}
+
+.currentUser {
+  background: #e3dcff !important;
+  border: 2px solid #7a6cff;
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.username {
+  font-size: 0.9rem;
+  color: #2d2a4a;
+}
+
+.score {
+  font-weight: 600;
+  color: #564b8b;
+  font-size: 0.85rem;
+}
+
+.medal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+}
