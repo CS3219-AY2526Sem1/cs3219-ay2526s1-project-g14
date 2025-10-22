@@ -1,18 +1,18 @@
 const Session = require("../model/sessionModel")
 const Question = require("../model/questionModel");
-const User = require("../model/user");
+const User = require("../model/userModel");
 const socketService = require("../services/socketService");
 
 // Create collaboration session (called by external matching service)
 exports.createSession = async (req, res) => {
     try {
-        const { users, difficulty, topic, questionData } = req.body; 
+        const { users, difficulty, topic, questionData } = req.body;
 
         // Validate required fields
         if (!users || !Array.isArray(users) || users.length !== 2) {
-            return res.status(400).json({ 
-                success: false, 
-                error: 'Must provide exactly 2 users in array format' 
+            return res.status(400).json({
+                success: false,
+                error: 'Must provide exactly 2 users in array format'
             });
         }
 
@@ -22,8 +22,8 @@ exports.createSession = async (req, res) => {
             const userDoc = await User.findById(u.userId);
             if (!userDoc) {
                 return res.status(404).json({
-                success: false,
-                error: `User with ID ${u.userId} not found`,
+                    success: false,
+                    error: `User with ID ${u.userId} not found`,
                 });
             }
             participants.push({
@@ -34,13 +34,13 @@ exports.createSession = async (req, res) => {
 
         // Get question (priority: questionData > database lookup > random selection)
         let question;
-        
+
         if (questionData?.questionId) {
             question = await Question.findOne({ questionId: questionData.questionId });
             if (!question) {
                 return res.status(404).json({
-                success: false,
-                error: `Question with ID ${questionData.questionId} not found`,
+                    success: false,
+                    error: `Question with ID ${questionData.questionId} not found`,
                 });
             }
         } else if (difficulty && topic) {
@@ -51,16 +51,16 @@ exports.createSession = async (req, res) => {
             ]);
 
             if (randomQuestions.length === 0) {
-                return res.status(404).json({ 
-                    success: false, 
-                    error: 'No questions available for selected criteria' 
+                return res.status(404).json({
+                    success: false,
+                    error: 'No questions available for selected criteria'
                 });
             }
             question = randomQuestions[0];
         } else {
-            return res.status(400).json({ 
-                success: false, 
-                error: 'Must provide questionData or both difficulty and topic for random selection' 
+            return res.status(400).json({
+                success: false,
+                error: 'Must provide questionData or both difficulty and topic for random selection'
             });
         }
 
@@ -108,9 +108,9 @@ exports.getSession = async (req, res) => {
             .populate('participants.userId', 'username');
 
         if (!session) {
-            return res.status(404).json({ 
-                success: false, 
-                error: 'Session not found' 
+            return res.status(404).json({
+                success: false,
+                error: 'Session not found'
             });
         }
 
@@ -132,8 +132,8 @@ exports.updateSessionCode = async (req, res) => {
 
         const session = await Session.findOneAndUpdate(
             { sessionId },
-            { 
-                code, 
+            {
+                code,
                 language,
                 status: 'in_progress'
             },
@@ -141,9 +141,9 @@ exports.updateSessionCode = async (req, res) => {
         );
 
         if (!session) {
-            return res.status(404).json({ 
-                success: false, 
-                error: 'Session not found' 
+            return res.status(404).json({
+                success: false,
+                error: 'Session not found'
             });
         }
 
@@ -167,7 +167,7 @@ exports.endSession = async (req, res) => {
 
         const session = await Session.findOneAndUpdate(
             { sessionId },
-            { 
+            {
                 status: 'completed',
                 endTime: new Date()
             },
@@ -175,9 +175,9 @@ exports.endSession = async (req, res) => {
         );
 
         if (!session) {
-            return res.status(404).json({ 
-                success: false, 
-                error: 'Session not found' 
+            return res.status(404).json({
+                success: false,
+                error: 'Session not found'
             });
         }
 
