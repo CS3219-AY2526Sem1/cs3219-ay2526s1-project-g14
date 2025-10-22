@@ -1,9 +1,9 @@
 
 const router = require('express').Router();
-const { getQuestions, getQuestionById, getRandomQuestion, getTopics } = require('./controller/questionController');
+const { getQuestions, getQuestionById, getRandomQuestion, getTopics, getLastQuestionId, addQuestion } = require('./controller/questionController');
 const Auth = require("./controller/authController");
 const { getUserById } = require('./controller/userController')
-const { authMiddleware } = require("./middleware/auth");
+const { authMiddleware, checkAdminRole } = require("./middleware/auth");
 const Matching = require("./controller/matchingController");
 
 const { 
@@ -29,6 +29,8 @@ router.get("/questions", authMiddleware, getQuestions);
 router.get("/questions/random-question", authMiddleware, getRandomQuestion);
 router.get("/questions/:questionId", authMiddleware, getQuestionById);
 router.get("/topics", authMiddleware, getTopics);
+router.get("/last-question-id", authMiddleware, getLastQuestionId)
+router.post("/add-question", authMiddleware, addQuestion)
 
 // Collaboration microservice routes (pure microservice API)
 router.post("/collaboration/session", createSession);           // External matching service calls this
