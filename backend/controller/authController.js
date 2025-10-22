@@ -1,5 +1,5 @@
-const User = require("../model/user");
-const TempUser = require("../model/tempUser");
+const User = require("../model/userModel");
+const TempUser = require("../model/tempUserModel");
 
 const { generateToken, generateOtp, sendOTPEmail } = require("../middleware/auth");
 
