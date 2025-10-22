@@ -23,7 +23,7 @@ const NavigationBar = () => {
     //             setCurrentUser(JSON.parse(sessionUser));
     //             return;
     //         }
-            
+
     //         // Then try localStorage (auth bypass)
     //         const authState = localStorage.getItem('state');
     //         if (authState) {
@@ -35,14 +35,14 @@ const NavigationBar = () => {
     //     };
 
     //     getUserData();
-        
+
     //     // Listen for storage changes (when user switches)
     //     const handleStorageChange = () => getUserData();
     //     window.addEventListener('storage', handleStorageChange);
-        
+
     //     // Also check periodically for sessionStorage changes
     //     const interval = setInterval(getUserData, 1000);
-        
+
     //     return () => {
     //         window.removeEventListener('storage', handleStorageChange);
     //         clearInterval(interval);
@@ -60,7 +60,7 @@ const NavigationBar = () => {
     if (location.pathname === "/login" || location.pathname === "/register" || isCollaborationPage) {
         return null;
     }
-    
+
     return (
         <Box
             component="nav"
@@ -104,14 +104,28 @@ const NavigationBar = () => {
                 >
                     <Typography sx={{ fontSize: "1rem", fontWeight: "semibold" }}>Question List</Typography>
                 </a>
+                <a
+                    href="/leaderboard"
+                    style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        textDecoration: "none",
+                        color: "black",
+                    }}
+                >
+                    <Typography sx={{ fontSize: "1rem", fontWeight: "semibold" }}>Leaderboard</Typography>
+                </a>
             </Box>
 
             <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <AccountCircleIcon sx={{ fontSize: 32, color: "black" }} />
-                    <Typography sx={{ color: "black", fontWeight: "bold" }}>
-                        {username || 'User'}
-                    </Typography>
+                    <a href="/profile">
+                        <Typography sx={{ color: "black", fontWeight: "bold" }}>
+                            {username || 'User'}
+                        </Typography>
+                    </a>
                 </Box>
                 <Button
                     variant="outlined"
@@ -124,7 +138,7 @@ const NavigationBar = () => {
                         "&:hover": { backgroundColor: "#f1f1f1" },
                     }}
                 >
-                <Typography sx={{ color: "black", fontWeight: "semibold" }}>Logout</Typography>
+                    <Typography sx={{ color: "black", fontWeight: "semibold" }}>Logout</Typography>
                 </Button>
             </Box>
         </Box>
