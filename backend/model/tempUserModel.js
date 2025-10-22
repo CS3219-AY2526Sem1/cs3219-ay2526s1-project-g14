@@ -3,13 +3,34 @@ const bcrypt = require("bcryptjs");
 
 const tempUserSchema = new mongoose.Schema(
   {
-    username: { type: String, required: true },
-    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-    password: { type: String, required: true, minlength: 6 },
-    otp: { type: String, required: true },
-    otpExpires: { type: Date, required: true },
+    username: {
+      type: String,
+      required: true
+    },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true
+    },
+    password: {
+      type: String,
+      required: true,
+      minlength: 6
+    },
+    otp: {
+      type: String,
+      required: true
+    },
+    otpExpires: {
+      type: Date,
+      required: true
+    },
   },
-  { timestamps: true }
+  {
+    timestamps: true
+  }
 );
 
 tempUserSchema.pre("save", async function (next) {

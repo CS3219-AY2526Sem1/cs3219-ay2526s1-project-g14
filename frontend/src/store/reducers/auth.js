@@ -1,4 +1,5 @@
 import { LOGIN, LOGOUT, SET_OTP_EMAIL, CLEAR_OTP_EMAIL, SET_USER_INFO } from "../actions/auth";
+import { UPDATE_USERNAME, UPDATE_EMAIL, DELETE_USER } from "../actions/user";
 
 const initialState = {
   username: null,
@@ -35,6 +36,14 @@ const authReducer = (state = initialState, action) => {
         otpEmail: null
       };
     }
+
+    case UPDATE_USERNAME:
+      return { ...state, username: action.payload.username };
+
+    case UPDATE_EMAIL:
+      return { ...state, email: action.payload.email };
+
+    case DELETE_USER:
 
     case LOGOUT: {
       return {

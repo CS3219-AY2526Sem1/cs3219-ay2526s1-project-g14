@@ -1,14 +1,18 @@
 import { useState, useEffect } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { Box } from "@mui/material";
 import Welcome from "../components/home/Welcome";
 import MatchingBox from "../components/home/MatchingBox";
 import RecentQuestions from "../components/home/RecentQuestions";
+import QuickLeaderboard from "../components/home/leaderboard/QuickLeaderboard";
+import { fetchQuickLeaderboard } from "../store/actions/leaderboard";
 import { fetchTopics } from "../controller/questionsController";
 // import { fetchRecentQuestions } from "../controller/questionsController";
 
 export default function Home() {
     const username = useSelector((state) => state.auth.username);
+    const dispatch = useDispatch();
+    const quickLeaderboard = useSelector((state) => state.leaderboard.quick);
 
     const [topics, setTopics] = useState([]);
     const [selectedTopic, setSelectedTopic] = useState("");
@@ -18,10 +22,11 @@ export default function Home() {
 
     useEffect(() => {
         fetchTopics().then(setTopics).catch(console.error);
+        dispatch(fetchQuickLeaderboard());
     }, []);
 
     return (
-        <Box p={3} display="flex" flexDirection="column" gap={4}>            
+        <Box p={3} display="flex" flexDirection="column" gap={4}>
             {username && (
                 <>
                     <Welcome username={username} />
@@ -34,7 +39,7 @@ export default function Home() {
                             setSelectedDifficulty={setSelectedDifficulty}
                             username={username}
                         />
-                        <RecentQuestions recentQuestions={recentQuestions} loading={loadingRecent} />
+                        <QuickLeaderboard data={quickLeaderboard} />
                     </Box>
                 </>
             )}
