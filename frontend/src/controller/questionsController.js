@@ -31,3 +31,18 @@ export const fetchOneQuestion = async(topic="", difficulty="") => {
     const { data } = await axiosInstance.get(API.RANDOMQUESTION, {params})
     return data.payload;
 }
+
+export const fetchLastQuestionId = async() => {
+    const { data } = await axiosInstance.get(API.LASTQUESTIONID);
+    return data.payload
+}
+
+export const addQuestion = async (questionData) => {
+    try {
+        const { data } = await axiosInstance.post(API.ADDQUESTION, questionData);
+        return data;
+    } catch (error) {
+        console.error("Error adding question:", error);
+        throw error;
+    }
+};

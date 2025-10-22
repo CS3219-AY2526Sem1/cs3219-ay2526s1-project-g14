@@ -10,20 +10,20 @@ import { useSelector } from "react-redux";
 
 import { PAGES } from "./constants/pages"
 import NavigationBar from './components/NavigationBar';
+import ProtectedRoute from './components/auth/ProtectedRoute';
 import Home from "./views/home";
 import Leaderboard from "./views/Leaderboard";
 import Profile from "./views/Profile";
 import Auth from "./views/Auth";
 import QuestionsPage from './views/questions-page';
-
+import AdminAddQuestion from './views/add-question';
 import CollaborationSession from './views/collaboration-session';
-
 import MatchingStatus from "./views/matching-status";
-
 
 function AppContent() {
   const navigate = useNavigate();
   const username = useSelector((state) => state.auth.username);
+  const role = useSelector((state) => state.auth.role);
 
   const checkAuthenticated = () => {
     if (username == null) {
@@ -48,6 +48,16 @@ function AppContent() {
         <Route path={PAGES.QUESTIONS} element={<QuestionsPage />} />
         <Route path={PAGES.COLLABORATION} element={<CollaborationSession />} />
         <Route path={PAGES.MATCH} element={<MatchingStatus />} />
+
+        {/* Admin-only route */}
+        <Route
+          path={PAGES.ADDQUESTION}
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminAddQuestion />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </>
   );

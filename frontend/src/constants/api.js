@@ -23,6 +23,8 @@ export const API = {
     QUESTIONS: "/questions",
     RANDOMQUESTION: "/questions/random-question",
     TOPICS: "/topics",
+    LASTQUESTIONID: "/last-question-id",
+    ADDQUESTION: "/add-question",
 
     // attempts routes
     USER_ATTEMPTS: "/attempt",
