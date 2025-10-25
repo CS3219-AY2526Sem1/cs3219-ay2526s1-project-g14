@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSelector } from "react-redux";
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -38,6 +38,10 @@ export default function CollaborationSession() {
     const [connectedUsers, setConnectedUsers] = useState([]);
     const [partnerUser, setPartnerUser] = useState(null);
     
+    // resize state
+    const [chatHeight, setChatHeight] = useState(200);
+    const isResizing = useRef(false);
+    
     useEffect(() => {
         // Redirect to home if no sessionId provided
         if (!sessionId) {
@@ -53,6 +57,46 @@ export default function CollaborationSession() {
             collaborationService.disconnect();
         };
     }, [sessionId, navigate]);
+
+    // Resize handler
+    useEffect(() => {
+        const handleMouseMove = (e) => {
+            if (!isResizing.current) return;
+            
+            const container = document.getElementById('right-panel-container');
+            if (!container) return;
+            
+            const containerRect = container.getBoundingClientRect();
+            const newChatHeight = containerRect.bottom - e.clientY;
+            
+            // Constrain between 150px and 80% of container height
+            const maxHeight = containerRect.height * 0.8;
+            if (newChatHeight >= 150 && newChatHeight <= maxHeight) {
+                setChatHeight(newChatHeight);
+            }
+        };
+
+        const handleMouseUp = () => {
+            isResizing.current = false;
+            document.body.style.cursor = 'default';
+            document.body.style.userSelect = 'auto';
+        };
+
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, []);
+
+    const handleResizeMouseDown = (e) => {
+        isResizing.current = true;
+        document.body.style.cursor = 'ns-resize';
+        document.body.style.userSelect = 'none';
+        e.preventDefault();
+    };
 
     const loadSession = async () => {
         try {
@@ -215,7 +259,8 @@ export default function CollaborationSession() {
                 gap: 2
             }}>
                 <Box sx={{
-                    width: { xs: "100%", md: "30%" },
+                    width: { xs: "100%", md: "25%" },
+                    minWidth: "250px",
                     border: "1px solid #ddd",
                     borderRadius: 2,
                     bgcolor: "white",
@@ -225,23 +270,28 @@ export default function CollaborationSession() {
                     <QuestionPanel question={question} />
                 </Box>
 
-                <Box sx={{
-                    flexGrow: 1,
-                    display: "flex",
-                    flexDirection: "column",
-                    height: "100%",
-                    overflow: "hidden",
-                    gap: 2
-                }}>
+                <Box 
+                    id="right-panel-container"
+                    sx={{
+                        flexGrow: 1,
+                        display: "flex",
+                        flexDirection: "column",
+                        height: "100%",
+                        overflow: "hidden",
+                        minWidth: 0
+                    }}
+                >
                     <Box sx={{
-                        flex: 6, // 60%
+                        flex: 1,
                         border: "1px solid #ddd",
                         borderRadius: 2,
                         bgcolor: "white",
                         p: 1,
                         display: "flex",
                         flexDirection: "column",
-                        overflow: "hidden",rBottom: "1px solid #eee"
+                        overflow: "hidden",
+                        minHeight: 0,
+                        marginBottom: '8px'
                     }}>
                         <CodeEditorPanel sessionId={sessionId} code={code} language={language} 
                           onCodeChange={(newCode) => {
@@ -253,8 +303,37 @@ export default function CollaborationSession() {
                           }}/>
                     </Box>
 
+                    {/* Resize Handle */}
+                    <Box
+                        onMouseDown={handleResizeMouseDown}
+                        sx={{
+                            height: '12px',
+                            cursor: 'ns-resize',
+                            bgcolor: '#e0e0e0',
+                            borderRadius: '6px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            marginY: '4px',
+                            transition: 'background-color 0.2s',
+                            '&:hover': {
+                                bgcolor: '#1976d2',
+                            },
+                            '&:active': {
+                                bgcolor: '#1565c0',
+                            }
+                        }}
+                    >
+                        <Box sx={{ 
+                            width: '60px', 
+                            height: '4px', 
+                            bgcolor: '#999',
+                            borderRadius: '2px'
+                        }} />
+                    </Box>
+
                     <Box sx={{
-                        flex: 4, // 40%
+                        height: `${chatHeight}px`,
                         border: "1px solid #ddd",
                         borderRadius: 2,
                         bgcolor: "white",
