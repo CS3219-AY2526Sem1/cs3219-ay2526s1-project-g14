@@ -1,7 +1,9 @@
 const mongoose = require("mongoose");
+const axios = require("axios");
 
 const UserAttempt = require("../model/userAttemptModel.js");
-const Session = require("../model/sessionModel.js");
+
+const COLLABORATION_SERVICE_URL = process.env.COLLABORATION_SERVICE_URL || 'http://localhost:5051';
 
 exports.saveAttempt = async (req, res) => {
   try {
@@ -16,9 +18,18 @@ exports.saveAttempt = async (req, res) => {
     } = req.body;
     const userId = req.user.id;
 
-    const session = await Session.findById(sessionId);
-    if (!session)
+    // Fetch session from collaboration service
+    let session;
+    try {
+      const sessionResponse = await axios.get(`${COLLABORATION_SERVICE_URL}/collaboration/session/${sessionId}`);
+      if (!sessionResponse.data.success) {
+        return res.status(404).json({ success: false, message: "Session not found" });
+      }
+      session = sessionResponse.data.payload;
+    } catch (error) {
+      console.error('Error fetching session from collaboration service:', error.message);
       return res.status(404).json({ success: false, message: "Session not found" });
+    }
 
     const participants = session.participants.map((p) => p.userId.toString());
     if (!participants.includes(userId))

@@ -6,7 +6,6 @@ const User = require("./controller/userController");
 const Question = require("./controller/questionController");
 const UserAttempt = require("./controller/userAttemptController");
 const Leaderboard = require("./controller/leaderboardController");
-const Session = require("./controller/collaborationController");
 const Matching = require("./controller/matchingController");
 const { authMiddleware, checkAdminRole } = require("./middleware/auth");
 
@@ -28,6 +27,12 @@ router.delete("/user/delete", authMiddleware, User.deleteAccount);
 // Question routes (upstream priority - protected with auth)
 router.get("/questions", authMiddleware, Question.getQuestions);
 router.get("/questions/random-question", authMiddleware, Question.getRandomQuestion);
+
+// Internal service routes (no auth required for service-to-service calls)
+router.get("/internal/questions/random-question", Question.getRandomQuestion);
+router.get("/internal/questions/:questionId", Question.getQuestionByQuestionId);
+
+// User-facing question routes (require auth)
 router.get("/questions/:questionId", authMiddleware, Question.getQuestionById);
 router.get("/topics", authMiddleware, Question.getTopics);
 
@@ -52,13 +57,7 @@ router.get("/leaderboard/streak", authMiddleware, (req, res, next) => {
 });
 router.get("/leaderboard/home", authMiddleware, Leaderboard.getQuickLeaderboard);
 
-// Collaboration microservice routes (pure microservice API)
-router.post("/collaboration/session", Session.createSession);           // External matching service calls this
-router.get("/collaboration/session/:sessionId", Session.getSession);
-router.put("/collaboration/session/:sessionId/code", Session.updateSessionCode);
-router.put("/collaboration/session/:sessionId/end", Session.endSession);
-router.get("/collaboration/user/:userId/session", Session.getUserSession);
-
+// Matching routes
 router.post("/matching/start", authMiddleware, Matching.start);
 router.get("/matching/:requestId/status", authMiddleware, Matching.status);
 router.delete("/matching/:requestId/cancel", authMiddleware, Matching.cancel);

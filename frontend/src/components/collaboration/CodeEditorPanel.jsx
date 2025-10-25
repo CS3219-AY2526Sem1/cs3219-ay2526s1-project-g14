@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
     Box,
     Typography,
@@ -7,10 +7,18 @@ import {
     InputLabel,
     MenuItem,
     Select,
-    TextField
+    Paper,
+    CircularProgress,
+    IconButton
 } from "@mui/material";
 import CodeIcon from '@mui/icons-material/Code';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import ClearIcon from '@mui/icons-material/Clear';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import Editor from '@monaco-editor/react';
 import collaborationService from '../../services/collaborationService';
+import codeExecutionService from '../../services/codeExecutionService';
 
 export default function CodeEditorPanel({ 
     sessionId, 
@@ -21,6 +29,10 @@ export default function CodeEditorPanel({
 }) {
     const [code, setCode] = useState(parentCode || '');
     const [language, setLanguage] = useState(parentLanguage || 'javascript');
+    const [isExecuting, setIsExecuting] = useState(false);
+    const [executionResult, setExecutionResult] = useState(null);
+    const [showOutput, setShowOutput] = useState(false);
+    const editorRef = useRef(null);
 
     useEffect(() => {
         setCode(parentCode || '');
@@ -47,8 +59,61 @@ export default function CodeEditorPanel({
         }
     };
 
+    const handleEditorDidMount = (editor, monaco) => {
+        editorRef.current = editor;
+    };
+
+    const handleRunCode = async () => {
+        setIsExecuting(true);
+        setShowOutput(true);
+        
+        try {
+            const result = await codeExecutionService.executeCode(code, language);
+            console.log('Execution result:', result);
+            console.log('showOutput:', true);
+            setExecutionResult(result);
+        } catch (error) {
+            const errorResult = {
+                success: false,
+                output: '',
+                error: error.message || 'An unexpected error occurred',
+                executionTime: '0s'
+            };
+            console.log('Execution error:', errorResult);
+            setExecutionResult(errorResult);
+        } finally {
+            setIsExecuting(false);
+        }
+    };
+
+    const handleClearOutput = () => {
+        setExecutionResult(null);
+    };
+
+    const handleToggleOutput = () => {
+        setShowOutput(!showOutput);
+    };
+
+    const getMonacoLanguage = (lang) => {
+        const languageMap = {
+            'javascript': 'javascript',
+            'python': 'python',
+            'java': 'java',
+            'cpp': 'cpp',
+            'c++': 'cpp'
+        };
+        return languageMap[lang.toLowerCase()] || 'javascript';
+    };
+
     return (
-        <Box sx={{ flexGrow: 1, p: 2, display: "flex", flexDirection: "column" }}>
+        <Box sx={{ 
+            flexGrow: 1, 
+            p: 2, 
+            display: "flex", 
+            flexDirection: "column",
+            overflow: "auto",
+            minHeight: 0
+        }}>
             <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <CodeIcon />
@@ -72,14 +137,21 @@ export default function CodeEditorPanel({
                     </FormControl>
                     <Button
                         variant="contained"
+                        startIcon={isExecuting ? <CircularProgress size={20} color="inherit" /> : <PlayArrowIcon />}
+                        onClick={handleRunCode}
+                        disabled={isExecuting || !code.trim()}
                         sx={{
                             backgroundColor: "black",
                             color: "white",
                             "&:hover": {
-                            backgroundColor: "#333", // slightly lighter on hover
+                                backgroundColor: "#333",
                             },
+                            "&:disabled": {
+                                backgroundColor: "#666",
+                                color: "#ccc"
+                            }
                         }}>
-                        Run Code
+                        {isExecuting ? 'Running...' : 'Run Code'}
                     </Button>
                 </Box>
             </Box>
@@ -87,34 +159,166 @@ export default function CodeEditorPanel({
             <Box
                 sx={{
                     flex: 1,
-                    bgcolor: "#f8f9fa",
-                    borderRadius: 1,
-                    p: 2,
-                    fontFamily: "monospace",
-                    color: "#333",
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 2,
+                    minHeight: 0
                 }}
             >
-                <TextField
-                    multiline
-                    fullWidth
-                    rows={15}
-                    value={code}
-                    onChange={(e) => handleCodeChange(e.target.value)}
-                    placeholder="Start coding here..."
-                    variant="outlined"
+                {/* Monaco Editor */}
+                <Box
                     sx={{
                         flex: 1,
-                        '& .MuiInputBase-root': {
-                        fontFamily: 'monospace',
-                        fontSize: '14px',
-                        height: '100%'
-                        },
-                        '& .MuiInputBase-input': {
-                        height: '100% !important',
-                        overflow: 'auto !important'
-                        }
+                        border: '1px solid #e0e0e0',
+                        borderRadius: 1,
+                        overflow: 'hidden',
+                        minHeight: 0
                     }}
-                />
+                >
+                    <Editor
+                        height="100%"
+                        language={getMonacoLanguage(language)}
+                        value={code}
+                        onChange={handleCodeChange}
+                        onMount={handleEditorDidMount}
+                        theme="vs-light"
+                        loading={<div>Loading editor...</div>}
+                        options={{
+                            minimap: { enabled: false },
+                            fontSize: 14,
+                            lineNumbers: 'on',
+                            roundedSelection: false,
+                            scrollBeyondLastLine: false,
+                            automaticLayout: true,
+                            tabSize: 2,
+                            wordWrap: 'on',
+                            suggestOnTriggerCharacters: true,
+                            quickSuggestions: true,
+                            parameterHints: { enabled: true }
+                        }}
+                    />
+                </Box>
+
+                {/* Output Panel */}
+                {executionResult && (
+                <Paper
+                    elevation={0}
+                    sx={{
+                        flex: showOutput ? '0 0 280px' : '0 0 50px',
+                        border: '1px solid #e0e0e0',
+                        borderRadius: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        overflow: 'hidden'
+                    }}
+                >
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            p: 1,
+                            bgcolor: '#f5f5f5',
+                            borderBottom: '1px solid #e0e0e0'
+                        }}
+                    >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Typography variant="subtitle2" fontWeight="bold">
+                                Output
+                            </Typography>
+                            {executionResult && (
+                                <Typography variant="caption" color="text.secondary">
+                                    ({executionResult.executionTime})
+                                </Typography>
+                            )}
+                        </Box>
+                        <Box>
+                            <IconButton size="small" onClick={handleClearOutput} title="Clear output">
+                                <ClearIcon fontSize="small" />
+                            </IconButton>
+                            <IconButton size="small" onClick={handleToggleOutput} title={showOutput ? "Minimize output" : "Expand output"}>
+                                {showOutput ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                            </IconButton>
+                        </Box>
+                    </Box>
+
+                    {showOutput && (
+                    <Box
+                        sx={{
+                            p: 2,
+                            fontFamily: 'monospace',
+                            fontSize: '13px',
+                            bgcolor: '#1e1e1e',
+                            color: '#d4d4d4',
+                            overflowY: 'auto',
+                            overflowX: 'hidden',
+                            flex: 1,
+                            minHeight: 0,
+                            '&::-webkit-scrollbar': {
+                                width: '8px',
+                            },
+                            '&::-webkit-scrollbar-track': {
+                                background: '#2e2e2e',
+                            },
+                            '&::-webkit-scrollbar-thumb': {
+                                background: '#555',
+                                borderRadius: '4px',
+                            },
+                            '&::-webkit-scrollbar-thumb:hover': {
+                                background: '#777',
+                            }
+                        }}
+                    >
+                            {isExecuting && (
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: '#4CAF50' }}>
+                                    <CircularProgress size={16} color="inherit" />
+                                    <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+                                        Executing code...
+                                    </Typography>
+                                </Box>
+                            )}
+
+                            {!isExecuting && !executionResult && (
+                                <Typography variant="body2" sx={{ color: '#888', fontFamily: 'monospace' }}>
+                                    Click "Run Code" to see output here
+                                </Typography>
+                            )}
+
+                            {!isExecuting && executionResult && (
+                                <>
+                                    {executionResult.output && (
+                                        <Box sx={{ mb: 1 }}>
+                                            <Typography variant="caption" sx={{ color: '#4CAF50', fontWeight: 'bold' }}>
+                                                OUTPUT:
+                                            </Typography>
+                                            <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                                                {executionResult.output}
+                                            </pre>
+                                        </Box>
+                                    )}
+
+                                    {executionResult.error && (
+                                        <Box>
+                                            <Typography variant="caption" sx={{ color: '#f44336', fontWeight: 'bold' }}>
+                                                ERROR:
+                                            </Typography>
+                                            <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: '#f44336' }}>
+                                                {executionResult.error}
+                                            </pre>
+                                        </Box>
+                                    )}
+
+                                    {executionResult.success && !executionResult.output && (
+                                        <Typography variant="body2" sx={{ color: '#4CAF50', fontFamily: 'monospace' }}>
+                                            ✓ Code executed successfully (no output)
+                                        </Typography>
+                                    )}
+                                </>
+                            )}
+                    </Box>
+                    )}
+                </Paper>
+                )}
             </Box>
         </Box>
     );
