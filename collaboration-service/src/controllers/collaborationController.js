@@ -1,14 +1,15 @@
-const Session = require("../model/sessionModel")
-const Question = require("../model/questionModel");
-const User = require("../model/userModel");
-const socketService = require("../services/socketService");
+const axios = require('axios');
+const Session = require('../models/sessionModel');
+const socketService = require('../services/socketService');
 
-// Create collaboration session (called by external matching service)
+const USER_SERVICE_URL = process.env.USER_SERVICE_URL || 'http://localhost:5050';
+const QUESTION_SERVICE_URL = process.env.QUESTION_SERVICE_URL || 'http://localhost:5050';
+
 exports.createSession = async (req, res) => {
     try {
         const { users, difficulty, topic, questionData } = req.body;
 
-        // Validate required fields
+        // Must have exactly 2 users for paired sessions
         if (!users || !Array.isArray(users) || users.length !== 2) {
             return res.status(400).json({
                 success: false,
@@ -16,47 +17,39 @@ exports.createSession = async (req, res) => {
             });
         }
 
-        // Validate that users exist in DB
         const participants = [];
         for (const u of users) {
-            const userDoc = await User.findById(u.userId);
-            if (!userDoc) {
-                return res.status(404).json({
-                    success: false,
-                    error: `User with ID ${u.userId} not found`,
-                });
-            }
             participants.push({
-                userId: userDoc._id,
+                userId: u.userId,
                 joinedAt: new Date(),
             });
         }
 
-        // Get question (priority: questionData > database lookup > random selection)
         let question;
-
+        
         if (questionData?.questionId) {
-            question = await Question.findOne({ questionId: questionData.questionId });
-            if (!question) {
+            try {
+                const questionResponse = await axios.get(`${QUESTION_SERVICE_URL}/questions/${questionData.questionId}`);
+                question = questionResponse.data;
+            } catch (error) {
                 return res.status(404).json({
                     success: false,
                     error: `Question with ID ${questionData.questionId} not found`,
                 });
             }
         } else if (difficulty && topic) {
-            // Find random question matching criteria
-            const randomQuestions = await Question.aggregate([
-                { $match: { difficulty, topic: { $in: [new RegExp(`^${topic}$`, "i")] } } },
-                { $sample: { size: 1 } }
-            ]);
-
-            if (randomQuestions.length === 0) {
+            try {
+                const questionResponse = await axios.get(`${QUESTION_SERVICE_URL}/internal/questions/random-question`, {
+                    params: { difficulty, topic }
+                });
+                question = questionResponse.data?.payload || questionResponse.data;
+            } catch (error) {
+                console.error('Failed to fetch random question:', error.response?.data || error.message);
                 return res.status(404).json({
                     success: false,
                     error: 'No questions available for selected criteria'
                 });
             }
-            question = randomQuestions[0];
         } else {
             return res.status(400).json({
                 success: false,
@@ -64,19 +57,17 @@ exports.createSession = async (req, res) => {
             });
         }
 
-        // Create collaboration session
         const session = await Session.create({
             participants,
-            questionId: question._id,
+            questionId: question.questionId,
             status: "active",
             code: "",
             language: "javascript",
             startTime: new Date(),
         });
 
-        // Emit event via socket.io 
         socketService.io.emit("sessionCreated", {
-            sessionId: session.sessionId.replace(/^room:/, ''),
+            sessionId: session.sessionId,
             participants: participants.map((p) => p.userId),
             topic: topic || question.topic,
             difficulty: difficulty || question.difficulty,
@@ -86,7 +77,7 @@ exports.createSession = async (req, res) => {
         return res.status(201).json({
             success: true,
             payload: {
-                sessionId: session.sessionId.replace(/^room:/, ''),
+                sessionId: session.sessionId,
                 session,
                 question,
             },
@@ -98,14 +89,11 @@ exports.createSession = async (req, res) => {
     }
 };
 
-// Get session details
 exports.getSession = async (req, res) => {
     try {
         const { sessionId } = req.params;
 
-        const session = await Session.findOne({ sessionId })
-            .populate('questionId')
-            .populate('participants.userId', 'username');
+        const session = await Session.findOne({ sessionId });
 
         if (!session) {
             return res.status(404).json({
@@ -114,9 +102,40 @@ exports.getSession = async (req, res) => {
             });
         }
 
+        // Convert to plain object first so we can modify it
+        const sessionObj = session.toObject();
+
+        // Fetch full question details
+        try {
+            const questionResponse = await axios.get(`${QUESTION_SERVICE_URL}/internal/questions/${session.questionId}`);
+            sessionObj.questionId = questionResponse.data.payload || questionResponse.data;
+        } catch (error) {
+            console.error('Failed to fetch question details:', error.message);
+        }
+
+        // Fetch participant usernames
+        const participantsWithUsernames = await Promise.all(
+            session.participants.map(async (p) => {
+                try {
+                    const userResponse = await axios.get(`${USER_SERVICE_URL}/users/${p.userId}`);
+                    return {
+                        ...p.toObject(),
+                        userId: {
+                            _id: p.userId,
+                            username: userResponse.data.username
+                        }
+                    };
+                } catch (error) {
+                    return p;
+                }
+            })
+        );
+
+        sessionObj.participants = participantsWithUsernames;
+
         res.status(200).json({
             success: true,
-            payload: session
+            payload: sessionObj
         });
     } catch (error) {
         console.error('Get session error:', error);
@@ -124,7 +143,6 @@ exports.getSession = async (req, res) => {
     }
 };
 
-// Update session code
 exports.updateSessionCode = async (req, res) => {
     try {
         const { sessionId } = req.params;
@@ -147,8 +165,7 @@ exports.updateSessionCode = async (req, res) => {
             });
         }
 
-        // Emit real-time code update
-        socketService.io.to(sessionId.replace(/^room:/, '')).emit("code-updated", { code, language });
+        socketService.io.to(sessionId).emit("code-updated", { code, language });
 
         res.status(200).json({
             success: true,
@@ -160,10 +177,10 @@ exports.updateSessionCode = async (req, res) => {
     }
 };
 
-// End session
 exports.endSession = async (req, res) => {
     try {
         const { sessionId } = req.params;
+        const userId = req.user?.id;
 
         const session = await Session.findOneAndUpdate(
             { sessionId },
@@ -181,7 +198,11 @@ exports.endSession = async (req, res) => {
             });
         }
 
-        // Session ended successfully - no cleanup needed for external matching service
+        // Notify all users in the session via WebSocket
+        socketService.io.to(sessionId).emit('session-ended', {
+            endedBy: userId || 'user',
+            message: 'Session has been ended'
+        });
 
         res.status(200).json({
             success: true,
@@ -193,7 +214,6 @@ exports.endSession = async (req, res) => {
     }
 };
 
-// Get user's active session
 exports.getUserSession = async (req, res) => {
     try {
         const { userId } = req.params;
@@ -201,7 +221,16 @@ exports.getUserSession = async (req, res) => {
         const session = await Session.findOne({
             'participants.userId': userId,
             status: { $in: ['active', 'in_progress'] }
-        }).populate('questionId');
+        });
+
+        if (session && session.questionId) {
+            try {
+                const questionResponse = await axios.get(`${QUESTION_SERVICE_URL}/internal/questions/${session.questionId}`);
+                session.questionId = questionResponse.data;
+            } catch (error) {
+                console.error('Failed to fetch question details:', error.message);
+            }
+        }
 
         res.status(200).json({
             success: true,
@@ -212,3 +241,4 @@ exports.getUserSession = async (req, res) => {
         res.status(500).json({ success: false, error: 'Server Error' });
     }
 };
+

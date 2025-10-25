@@ -1,5 +1,24 @@
 const mongoose = require("mongoose");
 
+const chatMessageSchema = new mongoose.Schema({
+    userId: {
+        type: String,
+        required: true
+    },
+    username: {
+        type: String,
+        required: true
+    },
+    message: {
+        type: String,
+        required: true
+    },
+    timestamp: {
+        type: Date,
+        default: Date.now
+    }
+}, { _id: false });
+
 const sessionSchema = new mongoose.Schema({
     sessionId: {
         type: String,
@@ -10,8 +29,7 @@ const sessionSchema = new mongoose.Schema({
     participants: {
         type: [{
             userId: {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: 'User',
+                type: String,
                 required: true
             },
             joinedAt: {
@@ -27,8 +45,7 @@ const sessionSchema = new mongoose.Schema({
         }
     },
     questionId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'question',
+        type: String,
         required: true
     },
     status: {
@@ -45,6 +62,10 @@ const sessionSchema = new mongoose.Schema({
         enum: ["javascript", "python", "java", "c++"],
         default: "javascript"
     },
+    chatHistory: {
+        type: [chatMessageSchema],
+        default: []
+    },
     startTime: {
         type: Date,
         default: Date.now
@@ -57,8 +78,8 @@ const sessionSchema = new mongoose.Schema({
     collection: 'sessions' 
 });
 
-// Index for efficient matching queries
-sessionSchema.index({ status: 1, difficulty: 1, topic: 1 });
-sessionSchema.index({ "participants.userId": 1, status: 1 }); // find sessions by participant
+sessionSchema.index({ status: 1 });
+sessionSchema.index({ "participants.userId": 1, status: 1 });
 
 module.exports = mongoose.model("Session", sessionSchema);
+

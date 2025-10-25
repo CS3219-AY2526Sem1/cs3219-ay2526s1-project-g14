@@ -3,9 +3,10 @@ import { useState, useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
 import { Box, Paper, Typography, Button, Alert, CircularProgress } from "@mui/material";
 import Filters from "../Filters";
-import { fetchOneQuestion } from "../../controller/questionsController";
+import { fetchOneQuestion, fetchQuestions } from "../../controller/questionsController";
 import QuestionCard from "../QuestionCard";
 import collaborationService from "../../services/collaborationService";
+import RejoinSessionModal from "./RejoinSessionModal";
 
 export default function MatchingBox({
     topics,
@@ -23,8 +24,31 @@ export default function MatchingBox({
     const [loading, setLoading] = useState(false);
     const [matchingStatus, setMatchingStatus] = useState(null); // 'waiting', 'matched', null
     const [error, setError] = useState(null);
+    const [questionsAvailable, setQuestionsAvailable] = useState(true);
+    const [checkingQuestions, setCheckingQuestions] = useState(false);
+    const [showRejoinModal, setShowRejoinModal] = useState(false);
+    const [activeSessionId, setActiveSessionId] = useState(null);
 
     const pollRef = useRef(null);
+    
+    // Check for active session on mount
+    useEffect(() => {
+        const checkActiveSession = async () => {
+            if (!userId) return;
+            
+            try {
+                const response = await collaborationService.getUserSession(userId);
+                if (response?.payload?.sessionId) {
+                    setActiveSessionId(response.payload.sessionId);
+                    setShowRejoinModal(true);
+                }
+            } catch (err) {
+                console.log('No active session found');
+            }
+        };
+        
+        checkActiveSession();
+    }, [userId]);
     
     useEffect(() => {
         // Initialize socket connection
@@ -67,6 +91,35 @@ export default function MatchingBox({
             }
         };
     }, [matchingStatus, navigate, userId]);
+
+    // Check question availability when topic/difficulty changes
+    useEffect(() => {
+        const checkQuestionAvailability = async () => {
+            if (!selectedTopic || !selectedDifficulty) {
+                setQuestionsAvailable(true);
+                return;
+            }
+
+            setCheckingQuestions(true);
+            try {
+                const questions = await fetchQuestions(selectedTopic, selectedDifficulty);
+                setQuestionsAvailable(questions && questions.length > 0);
+                if (!questions || questions.length === 0) {
+                    setError(`No questions available for ${selectedDifficulty} ${selectedTopic}`);
+                } else {
+                    setError(null);
+                }
+            } catch (err) {
+                console.error('Error checking questions:', err);
+                setQuestionsAvailable(false);
+                setError('Failed to check question availability');
+            } finally {
+                setCheckingQuestions(false);
+            }
+        };
+
+        checkQuestionAvailability();
+    }, [selectedTopic, selectedDifficulty]);
     
     const handleStartMatching = async () => {
         if (!selectedTopic || !selectedDifficulty) {
@@ -99,7 +152,19 @@ export default function MatchingBox({
         navigate(`/match?rid=${encodeURIComponent(rid)}`);
       } catch (err) {
         console.error(err);
-        setError(err.message || "Failed to start matching");
+        
+        // Check if user has an active session (409 Conflict)
+        if (err.response?.status === 409) {
+          const sessionId = err.response.data?.sessionId;
+          if (sessionId) {
+            setActiveSessionId(sessionId);
+            setShowRejoinModal(true);
+          } else {
+            setError(err.response.data?.message || 'You have an active session');
+          }
+        } else {
+          setError(err.message || "Failed to start matching");
+        }
         setLoading(false);
       }
     };
@@ -140,11 +205,9 @@ export default function MatchingBox({
             }
 
             // Create a session directly with the current user only
-            // For now, just use the current user as the only participant
             const payload = {
                 users: [
-                    { userId: userId, username: username },
-                    { userId: "68e3aa7f194289b0adf5ecaf", username: "rach" }
+                    { userId: userId, username: username }
                 ],
                 difficulty: selectedDifficulty,
                 topic: selectedTopic,
@@ -159,10 +222,40 @@ export default function MatchingBox({
         } finally {
             setLoading(false);
         }
-    };   
+    };
+
+    const handleEndSession = async () => {
+        try {
+            if (activeSessionId) {
+                await collaborationService.endSession(activeSessionId);
+                setActiveSessionId(null);
+            }
+        } catch (err) {
+            console.error('Failed to end session:', err);
+            setError(err.message || 'Failed to end session');
+        }
+    };
 
     return (
-        <Paper sx={{ flex: 1, p: 3, minWidth: 280, border: "1px solid #EDF2FF", borderRadius: 2 }}>
+        <>
+        <RejoinSessionModal 
+            open={showRejoinModal}
+            onClose={() => setShowRejoinModal(false)}
+            sessionId={activeSessionId}
+            onEndSession={handleEndSession}
+        />
+        
+        <Paper sx={{ 
+            flex: 1, 
+            p: 3, 
+            minWidth: 280, 
+            border: "1px solid #EDF2FF", 
+            borderRadius: 2,
+            opacity: showRejoinModal ? 0.5 : 1,
+            pointerEvents: showRejoinModal ? 'none' : 'auto',
+            filter: showRejoinModal ? 'blur(2px)' : 'none',
+            transition: 'all 0.3s ease'
+        }}>
         <Typography variant="h6" sx={{ fontWeight: "bold", color: "black", mb: 2 }}>
             {matchingStatus === 'waiting' ? 'Finding Partner...' : 
              matchingStatus === 'matched' ? 'Match Found!' : 'Start Matching'}
@@ -223,9 +316,11 @@ export default function MatchingBox({
                             "&:hover": { backgroundColor: "#D6E0FF", transform: "scale(1.05)" },
                         }}
                         onClick={handleStartMatching}
-                        disabled={loading || !selectedTopic || !selectedDifficulty}
+                        disabled={loading || !selectedTopic || !selectedDifficulty || !questionsAvailable || checkingQuestions}
                     >
-                        {loading ? <CircularProgress size={24} color="inherit" /> : 'Find Partner'}
+                        {checkingQuestions ? <CircularProgress size={24} color="inherit" /> : 
+                         loading ? <CircularProgress size={24} color="inherit" /> : 
+                         'Find Partner'}
                     </Button>
                     
                     <Button
@@ -238,7 +333,7 @@ export default function MatchingBox({
                             "&:hover": { backgroundColor: "#D6E0FF" },
                         }}
                         onClick={handlePracticeAlone}
-                        disabled={loading || !selectedTopic || !selectedDifficulty}
+                        disabled={loading || !selectedTopic || !selectedDifficulty || !questionsAvailable || checkingQuestions}
                     >
                         Practice Alone
                     </Button>
@@ -252,5 +347,6 @@ export default function MatchingBox({
             </Box>
         )}
         </Paper>
+        </>
     );
 }

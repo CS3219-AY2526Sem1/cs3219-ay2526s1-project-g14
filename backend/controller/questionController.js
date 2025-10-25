@@ -19,7 +19,6 @@ exports.getQuestions = async (req, res) => {
 exports.getQuestionById = async (req, res) => {
     try {
         const { questionId } = req.params;
-        console.log("req", req)
 
         if (!mongoose.Types.ObjectId.isValid(questionId)) {
             return res.status(400).json({ success: false, message: "Invalid question ID format.", });
@@ -37,6 +36,33 @@ exports.getQuestionById = async (req, res) => {
     } catch (err) {
         console.error("Error fetching question:", err);
         res.status(500).json({ success: false, error: err.message, });
+    }
+};
+
+// fetch a single question by its questionId field (for internal service call)
+exports.getQuestionByQuestionId = async (req, res) => {
+    try {
+        const { questionId } = req.params;
+        
+        // Convert to number if it's a string
+        const qId = Number(questionId);
+        
+        if (isNaN(qId)) {
+            return res.status(400).json({ success: false, message: "Invalid question ID format." });
+        }
+
+        const question = await Question.findOne({ questionId: qId });
+
+        if (!question) {
+            return res.status(404).json({
+                success: false,
+                message: "Question not found.",
+            });
+        }
+        res.status(200).json({ success: true, payload: question });
+    } catch (err) {
+        console.error("Error fetching question:", err);
+        res.status(500).json({ success: false, error: err.message });
     }
 };
 

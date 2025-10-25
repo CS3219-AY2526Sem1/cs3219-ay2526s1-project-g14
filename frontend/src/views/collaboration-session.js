@@ -20,61 +20,95 @@ export default function CollaborationSession() {
     const username = useSelector((state) => state.auth.username);
     const reduxUserId = useSelector((state) => state.auth.id);
 
-    // Session state
+    // session state
     const [session, setSession] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [question, setQuestion] = useState(null);
     
-    // Code editor state
+    // code editor state
     const [code, setCode] = useState('');
     const [language, setLanguage] = useState('javascript');
     
-    // Chat state
+    // chat state
     const [chatMessages, setChatMessages] = useState([]);
     const [newMessage, setNewMessage] = useState('');
     
-    // Connection state
+    // connection state
     const [connectedUsers, setConnectedUsers] = useState([]);
     const [partnerUser, setPartnerUser] = useState(null);
     
     useEffect(() => {
-        loadSession();
+        // Redirect to home if no sessionId provided
+        if (!sessionId) {
+            navigate('/');
+            return;
+        }
+        
+        // Setup socket listeners FIRST, then load session
         setupSocketListeners();
+        loadSession();
         
         return () => {
             collaborationService.disconnect();
         };
-    }, [sessionId]);
+    }, [sessionId, navigate]);
 
     const loadSession = async () => {
         try {
+            if (!sessionId) {
+                navigate('/');
+                return;
+            }
+            
             const response = await collaborationService.getSession(sessionId);
             const sessionData = response.payload;
             
+            // Check if session is already completed or cancelled
+            if (sessionData.status === 'completed' || sessionData.status === 'cancelled') {
+                setError('This session has ended and is no longer available');
+                setTimeout(() => navigate('/'), 2000);
+                return;
+            }
+            
             setSession(sessionData);
-            console.log("sessionData", sessionData)
-            setQuestion(sessionData.questionId)
+            console.log("sessionData", sessionData);
+            console.log("questionId from session:", sessionData.questionId);
+            setQuestion(sessionData.questionId);
             setCode(sessionData.code || '');
             setLanguage(sessionData.language || 'javascript');
             setChatMessages(sessionData.chatHistory || []);
             
             // Find partner
-            const parts = (sessionData.participants || []).map(p => p?.userId).filter(Boolean);
-            const myIdFromRedux = reduxUserId ? String(reduxUserId) : null;
-            const myById   = myIdFromRedux && parts.find(u => String(u._id) === myIdFromRedux);
-            const myByName = !myById && username
-                ? parts.find(u => (u.username || '').toLowerCase() === username.toLowerCase())
-                : null;
+            const parts = sessionData.participants || [];
+            
+            // Get userId from Redux - MUST have valid userId
+            const myId = reduxUserId ? String(reduxUserId) : null;
+            
+            if (!myId) {
+                console.error('No userId in Redux state!', { reduxUserId, username });
+                setError('Authentication error: Please log in again');
+                return;
+            }
 
-            const myId = String(myById?._id || myByName?._id || '');
-            const partnerObj = parts.find(u => String(u._id) !== myId) || null;
-            setPartnerUser(partnerObj);
+            // Find partner (the other participant)
+            const partnerParticipant = parts.find(p => String(p.userId) !== myId);
+            setPartnerUser(partnerParticipant ? { _id: partnerParticipant.userId, username: 'Partner' } : null);
 
+            // Ensure socket is initialized before joining
+            collaborationService.initializeSocket();
+            
+            // Small delay to ensure socket connection is established
+            await new Promise(resolve => setTimeout(resolve, 100));
 
-            // Join socket room
-            const myJoinId = myId || myIdFromRedux || '';
-            console.log('Joining socket room:', { sessionId, userId: myJoinId, username });
+            // Join socket room - ensure we have a valid userId
+            const myJoinId = myId || '';
+            
+            if (!myJoinId) {
+                setError('Unable to join session: User ID not found');
+                return;
+            }
+            
             collaborationService.joinSession(sessionId, myJoinId, username);
 
             
@@ -89,7 +123,7 @@ export default function CollaborationSession() {
         console.log('Setting up socket listeners for session:', sessionId);
         collaborationService.onSessionState((data) => {
             console.log('Session state received:', data);
-            setConnectedUsers(data.connectedUsers || 0);
+            setConnectedUsers(data.connectedUsers || []);
         });
 
         collaborationService.onUserJoined((data) => {

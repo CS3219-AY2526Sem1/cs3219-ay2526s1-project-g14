@@ -1,6 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { useState, useEffect } from "react";
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
@@ -15,41 +14,6 @@ const NavigationBar = () => {
     const location = useLocation();
     const username = useSelector((state) => state.auth.username);
     const role = useSelector((state) => state.auth.role);
-
-    // Get user from localStorage (set by UserSelector) or sessionStorage
-    // useEffect(() => {
-    //     const getUserData = () => {
-    //         // First try sessionStorage (UserSelector)
-    //         const sessionUser = sessionStorage.getItem('currentUser');
-    //         if (sessionUser) {
-    //             setCurrentUser(JSON.parse(sessionUser));
-    //             return;
-    //         }
-
-    //         // Then try localStorage (auth bypass)
-    //         const authState = localStorage.getItem('state');
-    //         if (authState) {
-    //             const userData = JSON.parse(authState);
-    //             setCurrentUser({
-    //                 username: userData.user?.username || 'User'
-    //             });
-    //         }
-    //     };
-
-    //     getUserData();
-
-    //     // Listen for storage changes (when user switches)
-    //     const handleStorageChange = () => getUserData();
-    //     window.addEventListener('storage', handleStorageChange);
-
-    //     // Also check periodically for sessionStorage changes
-    //     const interval = setInterval(getUserData, 1000);
-
-    //     return () => {
-    //         window.removeEventListener('storage', handleStorageChange);
-    //         clearInterval(interval);
-    //     };
-    // }, []);
 
     const onLogout = () => {
         dispatch(handleLogout());
