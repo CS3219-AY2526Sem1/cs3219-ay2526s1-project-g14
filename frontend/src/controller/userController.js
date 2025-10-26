@@ -25,13 +25,12 @@ export const getUserById = async (id) => {
 export const getRoleById = async (id) => {
     try {
         const { data } = await axiosInstance.get(`${API.USER}/${id}`);
-        return data.payload.role;
+        return data.result.role;
     } catch (error) {
         console.error("Error fetching user by ID:", error);
         throw error;
     }
 };
-
 
 export const updateUsername = async (username) => {
     try {
