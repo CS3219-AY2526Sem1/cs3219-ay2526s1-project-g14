@@ -42,7 +42,7 @@ PORT=5051
 MONGODB_CONNECTION=mongodb+srv://username:password@cluster.mongodb.net/database?retryWrites=true&w=majority
 JWT_SECRET=your_jwt_secret_here
 USER_SERVICE_URL=http://localhost:5050
-QUESTION_SERVICE_URL=http://localhost:5050
+QUESTION_SERVICE_URL=http://localhost:5052
 FRONTEND_URL=http://localhost:3000
 ```
 
@@ -54,7 +54,7 @@ FRONTEND_URL=http://localhost:3000
 | `MONGODB_CONNECTION` | MongoDB connection string | Required |
 | `JWT_SECRET` | Secret for JWT token verification | Required |
 | `USER_SERVICE_URL` | URL of the user service | `http://localhost:5050` |
-| `QUESTION_SERVICE_URL` | URL of the question service | `http://localhost:5050` |
+| `QUESTION_SERVICE_URL` | URL of the question service | `http://localhost:5052` |
 | `FRONTEND_URL` | Frontend URL for CORS | `http://localhost:3000` |
 
 ## 🏃 Running the Service
