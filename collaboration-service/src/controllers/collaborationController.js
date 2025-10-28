@@ -21,6 +21,7 @@ exports.createSession = async (req, res) => {
         for (const u of users) {
             participants.push({
                 userId: u.userId,
+                username: u.username,
                 joinedAt: new Date(),
             });
         }
@@ -69,6 +70,7 @@ exports.createSession = async (req, res) => {
         socketService.io.emit("sessionCreated", {
             sessionId: session.sessionId,
             participants: participants.map((p) => p.userId),
+            usernames: participants.map((p) => p.username),
             topic: topic || question.topic,
             difficulty: difficulty || question.difficulty,
             questionTitle: question.title,
@@ -202,6 +204,13 @@ exports.endSession = async (req, res) => {
         socketService.io.to(sessionId).emit('session-ended', {
             endedBy: userId || 'user',
             message: 'Session has been ended'
+        });
+
+        // Send confirmation to all sockets in the room (including the initiator)
+        // This allows the initiator to wait for confirmation before navigating away
+        socketService.io.to(sessionId).emit('session-ended-confirmed', {
+            sessionId,
+            timestamp: new Date()
         });
 
         res.status(200).json({

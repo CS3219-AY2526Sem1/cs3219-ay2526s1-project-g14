@@ -137,7 +137,10 @@ export default function CollaborationSession() {
 
             // Find partner (the other participant)
             const partnerParticipant = parts.find(p => String(p.userId) !== myId);
-            setPartnerUser(partnerParticipant ? { _id: partnerParticipant.userId, username: 'Partner' } : null);
+            setPartnerUser(partnerParticipant ? { 
+                _id: partnerParticipant.userId, 
+                username: partnerParticipant.username || 'Partner' 
+            } : null);
 
             // Ensure socket is initialized before joining
             collaborationService.initializeSocket();
@@ -205,11 +208,15 @@ export default function CollaborationSession() {
     const handleEndSession = async () => {
         if (window.confirm('Are you sure you want to end this session?')) {
             try {
-                await collaborationService.endSession(sessionId);
-                collaborationService.endSessionSocket(sessionId);
+                // Wait for confirmation that session ended and all users notified
+                await collaborationService.endSessionAndWait(sessionId);
+                // Now safe to navigate away
                 navigate('/');
             } catch (err) {
+                console.error('Error ending session:', err);
                 setError(err.message);
+                // Navigate anyway after error to avoid stuck state
+                setTimeout(() => navigate('/'), 1000);
             }
         }
     };

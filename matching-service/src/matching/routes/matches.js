@@ -12,7 +12,7 @@ const {
 const axios = require("axios");
 const r = Router();
 
-const COLLAB_URL = process.env.COLLAB_SERVICE_URL || "http://localhost:5050"; // backend that serves /collaboration/session
+const COLLAB_URL = process.env.COLLAB_SERVICE_URL || "http://localhost:5051"; // backend that serves /collaboration/session
 const MATCH_TTL_SECONDS = Number(process.env.MATCH_REQUEST_TTL_SECONDS || 60);
 
 /**
@@ -46,8 +46,15 @@ r.post("/matches", async (req, res) => {
       const thisReq = await getRequest(requestId);
       const thatReq = await getRequest(counterpartReqId);
 
+      console.log('Creating session with users:', {
+        thisReq,
+        thatReq,
+        thisUsername: thisReq?.username,
+        thatUsername: thatReq?.username
+      });
+
       const users = [
-        { userId: thisReq?.userId || userId, username },
+        { userId: thisReq?.userId || userId, username: thisReq?.username || username },
         { userId: thatReq?.userId || "unknown", username: thatReq?.username || "Partner" }
       ];
 
