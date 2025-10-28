@@ -115,6 +115,42 @@ class CollaborationService {
         }
     }
 
+    // End session and wait for confirmation before proceeding
+    async endSessionAndWait(sessionId) {
+        return new Promise((resolve, reject) => {
+            if (!this.socket || !this.isConnected) {
+                // Fallback to REST API only if socket not available
+                this.endSession(sessionId)
+                    .then(resolve)
+                    .catch(reject);
+                return;
+            }
+
+            const timeout = setTimeout(() => {
+                this.socket.off('session-ended-confirmed', confirmHandler);
+                reject(new Error('Session end confirmation timeout'));
+            }, 5000);
+
+            const confirmHandler = () => {
+                clearTimeout(timeout);
+                this.socket.off('session-ended-confirmed', confirmHandler);
+                console.log('✅ Session end confirmed by server');
+                resolve();
+            };
+
+            // Listen for confirmation
+            this.socket.once('session-ended-confirmed', confirmHandler);
+
+            // Call REST API to end session (backend will emit events)
+            this.endSession(sessionId)
+                .catch((error) => {
+                    clearTimeout(timeout);
+                    this.socket.off('session-ended-confirmed', confirmHandler);
+                    reject(error);
+                });
+        });
+    }
+
     async getUserSession(userId) {
         try {
             const response = await collaborationAxios.get(`/collaboration/user/${userId}/session`);
@@ -156,11 +192,6 @@ class CollaborationService {
         }
     }
 
-    endSessionSocket(sessionId) {
-        if (this.socket && this.isConnected) {
-            this.socket.emit('end-session', { sessionId });
-        }
-    }
 
     // Event listeners
     onMatchFound(callback) {

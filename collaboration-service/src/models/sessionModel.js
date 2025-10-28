@@ -32,6 +32,10 @@ const sessionSchema = new mongoose.Schema({
                 type: String,
                 required: true
             },
+            username: {
+                type: String,
+                required: true   
+            },
             joinedAt: {
                 type: Date,
                 default: Date.now
