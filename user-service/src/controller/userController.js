@@ -6,7 +6,7 @@ const { generateOtp, sendOTPEmail } = require("../middleware/auth.js");
 
 exports.getUserById = async (req, res) => {
   try {
-    const { userId } = req.params;
+    const { userId } = req.body;
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(400).json({ success: false, message: "Invalid user ID format.", });
     }

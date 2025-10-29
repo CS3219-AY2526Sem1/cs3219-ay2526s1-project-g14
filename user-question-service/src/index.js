@@ -3,7 +3,7 @@ const http = require('http');
 const app = require('./app');
 const { connectDB } = require('./config/database');
 
-const PORT = process.env.PORT || 5053;
+const PORT = process.env.PORT || 5054;
 
 connectDB();
 

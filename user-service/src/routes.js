@@ -14,6 +14,7 @@ router.post("/auth/firebase", Auth.upsertFirebase);
 
 // User routes
 router.get("/user/:userId", authMiddleware, User.getUserById);
+router.post("/userbulk/batch", authMiddleware, User.getUsersByIds);
 router.put("/user/updateUsername", authMiddleware, User.updateUsername);
 router.put("/user/updatePassword", authMiddleware, User.updatePassword);
 router.post("/user/changeEmail/request", authMiddleware, User.requestEmailChange);
