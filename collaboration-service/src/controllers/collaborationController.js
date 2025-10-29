@@ -4,7 +4,7 @@ const socketService = require('../services/socketService');
 
 const USER_SERVICE_URL = process.env.USER_SERVICE_URL || 'http://localhost:5050';
 const QUESTION_SERVICE_URL = process.env.QUESTION_SERVICE_URL || 'http://localhost:5052';
-const ATTEMPT_SERVICE_URL = process.env.ATTEMPT_SERVICE_URL || 'http://localhost:5053';
+const ATTEMPT_SERVICE_URL = process.env.REACT_APP_USERQUESTION_URL || 'http://localhost:5054';
 
 exports.createSession = async (req, res) => {
     try {

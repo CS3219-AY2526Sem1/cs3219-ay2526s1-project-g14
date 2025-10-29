@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const collaborationRoutes = require('./routes/collaboration');
+const healthRoutes = require("./routes/health");
 
 const app = express();
 
@@ -11,10 +12,7 @@ app.use(cors({
 app.use(express.json());
 
 app.use('/collaboration', collaborationRoutes);
-
-app.get('/health', (req, res) => {
-    res.json({ status: 'OK', service: 'collaboration-service' });
-});
+app.use("/health", healthRoutes);
 
 module.exports = app;
 

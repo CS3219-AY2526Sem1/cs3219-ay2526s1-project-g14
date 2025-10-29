@@ -1,12 +1,12 @@
 const mongoose = require("mongoose");
 const User = require("../model/userModel.js");
-const TempEmail = require("../model/tempEmailModel");
+const TempEmail = require("../model/tempEmailModel.js");
 const bcrypt = require("bcryptjs");
-const { generateOtp, sendOTPEmail } = require("../middleware/auth");
+const { generateOtp, sendOTPEmail } = require("../middleware/auth.js");
 
 exports.getUserById = async (req, res) => {
   try {
-    const { userId } = req.params;
+    const { userId } = req.body;
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(400).json({ success: false, message: "Invalid user ID format.", });
     }

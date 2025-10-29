@@ -12,7 +12,7 @@ const register = async (req, res) => {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    const existingUser = await User.findOne({ $or: [ {email}, {username}] });
+    const existingUser = await User.findOne({ $or: [{ email }, { username }] });
     if (existingUser) {
       if (existingUser.email === email) {
         return res.status(400).json({ message: "Email already registered" });
@@ -20,7 +20,7 @@ const register = async (req, res) => {
       if (existingUser.username === username) {
         return res.status(400).json({ message: "Username already taken" });
       }
-    } 
+    }
 
     let pending = await TempUser.findOne({ email });
     const otp = generateOtp();
@@ -123,6 +123,12 @@ const login = async (req, res) => {
 
     const token = generateToken(user);
 
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+    });
+
     res.json({
       message: "Login successful",
       token,
@@ -161,6 +167,12 @@ const upsertFirebase = async (req, res) => {
 
     const token = generateToken(user);
 
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+    });
+    
     res.status(200).json({
       message: newUser ? "Firebase login successful" : "Firebase user registered successfully",
       token,

@@ -3,7 +3,7 @@ import axios from 'axios';
 
 // Create axios instance for the attempt microservice
 const userAttemptAxios = axios.create({
-    baseURL: process.env.REACT_APP_ATTEMPT_SERVICE_URL || 'http://localhost:5053',
+    baseURL: process.env.REACT_APP_USERQUESTION_URL || 'http://localhost:5054',
     timeout: 10000
 });
 

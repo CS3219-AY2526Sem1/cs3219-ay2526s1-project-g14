@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const axios = require("axios");
 
 const UserAttempt = require("../models/userAttemptModel");
-const USER_SERVICE_URL = process.env.USER_SERVICE_URL || 'http://localhost:5000';
+const USER_SERVICE_URL = process.env.USER_SERVICE_URL || 'http://localhost:5050';
 
 const DAYS = 30;
 
@@ -76,11 +76,20 @@ exports.getLeaderboard = async (req, res) => {
     const type = req.pathType || req.query.type || "overall";
     const limit = 50;
     const results = await aggregateBase({ type, limit });
+    const token = req.headers.authorization;
 
     let users = [];
     try {
       const ids = results.map((s) => s._id);
-      const { data } = await axios.post(`${USER_SERVICE_URL}/user/batch`, { ids }); 
+      const { data } = await axios.post(
+        `${USER_SERVICE_URL}/userbulk/batch`,
+        { ids },
+        {
+          headers: {
+            Authorization: token,
+          },
+        }
+      );
       users = data.users || [];
     } catch (err) {
       console.error("Failed to fetch users from user-service:", err.message);
@@ -92,7 +101,7 @@ exports.getLeaderboard = async (req, res) => {
     let sorted;
     if (type === "speed") {
       sorted = results.filter(r => r.avgTime && r.avgTime < 9999)
-                      .sort((a, b) => a.avgTime - b.avgTime);
+        .sort((a, b) => a.avgTime - b.avgTime);
     } else if (type === "streak") {
       sorted = results.sort((a, b) => b.activeDaysCount - a.activeDaysCount);
     } else {
@@ -129,6 +138,7 @@ exports.getQuickLeaderboard = async (req, res) => {
   try {
     const userId = req.user?.id;
     const all = await aggregateBase({ type: "overall" });
+    const token = req.headers.authorization;
 
     if (!all.length) {
       return res.status(200).json({ success: true, result: [] });
@@ -137,7 +147,15 @@ exports.getQuickLeaderboard = async (req, res) => {
     let users = [];
     try {
       const ids = results.map((s) => s._id);
-      const { data } = await axios.post(`${USER_SERVICE_URL}/user/batch`, { ids }); 
+      const { data } = await axios.post(
+        `${USER_SERVICE_URL}/userbulk/batch`,
+        { ids },
+        {
+          headers: {
+            Authorization: token,
+          },
+        }
+      );
       users = data.users || [];
     } catch (err) {
       console.error("Failed to fetch users from user-service:", err.message);
