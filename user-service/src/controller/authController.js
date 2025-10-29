@@ -123,6 +123,12 @@ const login = async (req, res) => {
 
     const token = generateToken(user);
 
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+    });
+
     res.json({
       message: "Login successful",
       token,
@@ -161,6 +167,12 @@ const upsertFirebase = async (req, res) => {
 
     const token = generateToken(user);
 
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+    });
+    
     res.status(200).json({
       message: newUser ? "Firebase login successful" : "Firebase user registered successfully",
       token,

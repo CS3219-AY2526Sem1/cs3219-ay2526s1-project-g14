@@ -1,11 +1,14 @@
 require('dotenv').config();
+const http = require('http');
 const app = require('./app');
-const connectDB = require('./config/db');
+const { connectDB } = require('./config/database');
 
-const PORT = process.env.PORT || 5050;
+const PORT = process.env.PORT || 5053;
+
 connectDB();
-console.log("MongoDB connected")
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+const server = http.createServer(app);
+
+server.listen(PORT, () => {
+    console.log(`Attempt Service running on port ${PORT}`);
 });
