@@ -4,7 +4,7 @@ export const PAGES = {
     REGISTER: "/register",
     HOME: "/",
     QUESTIONS: "/questions",
-    ADDQUESTION: "questions/add-question",
+    ADDQUESTION: "/questions/add-question",
     LEADERBOARD: "/leaderboard",
     PROFILE: "/profile",
     COLLABORATION: "/collaboration/:sessionId",
