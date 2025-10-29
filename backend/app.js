@@ -2,11 +2,13 @@ const express = require('express');
 const cors = require('cors');
 const createHttpErrors = require('http-errors');
 const router = require('./routes');
+const aiRoutes = require('./ai/ai.routes.js');
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use("/ai", aiRoutes);
 
 app.use('/', router);
 

@@ -12,6 +12,7 @@ import TopBar from '../components/collaboration/TopBar';
 import QuestionPanel from '../components/collaboration/QuestionPanel/QuestionPanel';
 import CodeEditorPanel from '../components/collaboration/CodeEditorPanel';
 import ChatPanel from '../components/collaboration/ChatPanel';
+import AiAssistantWidget from '../components/ai/AiAssistantWidget';
 
 export default function CollaborationSession() {
     const { sessionId } = useParams();
@@ -352,6 +353,16 @@ export default function CollaborationSession() {
                     </Box>
                 </Box>
             </Box>
+                <AiAssistantWidget
+                    sessionId={sessionId}
+                    userId={reduxUserId}
+                    username={username}
+                    questionId={question}          
+                    language={language}
+                    getCode={() => code}
+                    chatMessages={chatMessages}
+                    dockOffsetPx={120}            
+                />
         </Box>
     );
 }
