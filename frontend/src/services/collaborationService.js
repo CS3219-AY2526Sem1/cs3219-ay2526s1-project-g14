@@ -21,9 +21,6 @@ collaborationAxios.interceptors.request.use((config) => {
     return config;
 });
 
-
-
-
 class CollaborationService {
     constructor() {
         this.socket = null;

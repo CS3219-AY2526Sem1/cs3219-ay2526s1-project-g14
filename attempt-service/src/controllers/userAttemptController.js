@@ -1,41 +1,32 @@
-const mongoose = require("mongoose");
-const axios = require("axios");
-
 const UserAttempt = require("../models/userAttemptModel.js");
-
-const COLLABORATION_SERVICE_URL = process.env.COLLABORATION_SERVICE_URL || 'http://localhost:5051';
 
 exports.saveAttempt = async (req, res) => {
   try {
     const {
       sessionId,
+      participants,
       questionId,
       submittedBy,
       code,
       language,
       testCasesPassed = 0,
       totalTestCases = 0,
+      timeTaken
     } = req.body;
     const userId = req.user.id;
-
-    // Fetch session from collaboration service
-    let session;
-    try {
-      const sessionResponse = await axios.get(`${COLLABORATION_SERVICE_URL}/collaboration/session/${sessionId}`);
-      if (!sessionResponse.data.success) {
-        return res.status(404).json({ success: false, message: "Session not found" });
-      }
-      session = sessionResponse.data.payload;
-    } catch (error) {
-      console.error('Error fetching session from collaboration service:', error.message);
-      return res.status(404).json({ success: false, message: "Session not found" });
+    
+    if (!participants || !Array.isArray(participants)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or missing participants array",
+      });
     }
 
-    const participants = session.participants.map((p) => p.userId.toString());
-    if (!participants.includes(userId))
+    const participantIds = participants.map(p => p.userId.toString());
+    if (!participantIds.includes(userId)) {
       return res.status(403).json({ success: false, message: "User not part of this session" });
+    }
 
-    const timeTaken = Math.round((Date.now() - new Date(session.startTime)) / 1000);
     const passed = totalTestCases > 0 && testCasesPassed === totalTestCases;
 
     const attempts = await Promise.all(
@@ -54,7 +45,8 @@ exports.saveAttempt = async (req, res) => {
         })
       )
     );
-
+    console.log("recorded attempts in attempt controller", attempts)
+    
     res.status(201).json({
       success: true,
       message: "Attempt recorded for both users",
