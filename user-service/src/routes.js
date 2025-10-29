@@ -2,6 +2,7 @@
 const router = require('express').Router();
 const Auth = require("./controller/authController");
 const User = require("./controller/userController");
+const Matching = require("./controller/matchingController");
 const Health = require("./controller/healthController");
 const { authMiddleware } = require("./middleware/auth");
 
@@ -24,5 +25,10 @@ router.delete("/user/delete", authMiddleware, User.deleteAccount);
 // Health routes
 router.get("/health/live", Health.selfCheck);
 router.get("/health/services", Health.serviceCheck);
+
+// Matching routes
+router.post("/matching/start", authMiddleware, Matching.start);
+router.get("/matching/:requestId/status", authMiddleware, Matching.status);
+router.delete("/matching/:requestId/cancel", authMiddleware, Matching.cancel);
 
 module.exports = router;
