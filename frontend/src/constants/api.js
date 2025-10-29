@@ -19,13 +19,6 @@ export const API = {
     USER_CHANGE_EMAIL_VERIFY: "/user/changeEmail/verify",
     USER_DELETE: "/user/delete",
 
-    // questions routes
-    QUESTIONS: "/questions",
-    RANDOMQUESTION: "/questions/random-question",
-    TOPICS: "/topics",
-    LASTQUESTIONID: "/last-question-id",
-    ADDQUESTION: "/add-question",
-
     // attempts routes
     USER_ATTEMPTS: "/attempt",
     USER_STATS: "/attempt/stats",

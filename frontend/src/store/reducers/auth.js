@@ -5,7 +5,6 @@ const initialState = {
   username: null,
   id: null,
   email: null,
-  role: null,
   token: null,
   otpEmail: null,
 };
@@ -18,7 +17,6 @@ const authReducer = (state = initialState, action) => {
         username: action.username,
         id: action.id,
         email: action.email,
-        role: action.role,
         token: action.token
       };
     }

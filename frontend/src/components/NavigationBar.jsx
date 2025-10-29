@@ -1,5 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import { useEffect, useState } from 'react';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
@@ -7,13 +8,25 @@ import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import { PAGES } from "../constants/pages"
 import { handleLogout } from "../store/actions/auth"
+import { getRoleById } from "../controller/userController";
 
 const NavigationBar = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const location = useLocation();
     const username = useSelector((state) => state.auth.username);
-    const role = useSelector((state) => state.auth.role);
+    const userId = useSelector((state) => state.auth.id)
+    const [role, setRole] = useState(null)
+
+    useEffect(() => {
+        if (userId) {
+            async function fetchRole() {
+                const r = await getRoleById(userId);
+                    setRole(r);
+                }
+            fetchRole();
+        }
+    }, [userId]);
 
     const onLogout = () => {
         dispatch(handleLogout());
@@ -72,7 +85,7 @@ const NavigationBar = () => {
                 </a>
                 {role === "admin" && (
                     <a
-                    href="/add-question"
+                    href="/questions/add-question"
                     style={{
                         display: "flex",
                         alignItems: "center",

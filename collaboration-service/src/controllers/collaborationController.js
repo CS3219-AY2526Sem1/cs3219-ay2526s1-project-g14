@@ -3,7 +3,7 @@ const Session = require('../models/sessionModel');
 const socketService = require('../services/socketService');
 
 const USER_SERVICE_URL = process.env.USER_SERVICE_URL || 'http://localhost:5050';
-const QUESTION_SERVICE_URL = process.env.QUESTION_SERVICE_URL || 'http://localhost:5050';
+const QUESTION_SERVICE_URL = process.env.QUESTION_SERVICE_URL || 'http://localhost:5052';
 
 exports.createSession = async (req, res) => {
     try {
@@ -40,7 +40,7 @@ exports.createSession = async (req, res) => {
             }
         } else if (difficulty && topic) {
             try {
-                const questionResponse = await axios.get(`${QUESTION_SERVICE_URL}/internal/questions/random-question`, {
+                const questionResponse = await axios.get(`${QUESTION_SERVICE_URL}/questions/internal/random-question`, {
                     params: { difficulty, topic }
                 });
                 question = questionResponse.data?.payload || questionResponse.data;
@@ -109,7 +109,7 @@ exports.getSession = async (req, res) => {
 
         // Fetch full question details
         try {
-            const questionResponse = await axios.get(`${QUESTION_SERVICE_URL}/internal/questions/${session.questionId}`);
+            const questionResponse = await axios.get(`${QUESTION_SERVICE_URL}/questions/internal/${session.questionId}`);
             sessionObj.questionId = questionResponse.data.payload || questionResponse.data;
         } catch (error) {
             console.error('Failed to fetch question details:', error.message);
@@ -234,7 +234,7 @@ exports.getUserSession = async (req, res) => {
 
         if (session && session.questionId) {
             try {
-                const questionResponse = await axios.get(`${QUESTION_SERVICE_URL}/internal/questions/${session.questionId}`);
+                const questionResponse = await axios.get(`${QUESTION_SERVICE_URL}/questions/internal/${session.questionId}`);
                 session.questionId = questionResponse.data;
             } catch (error) {
                 console.error('Failed to fetch question details:', error.message);

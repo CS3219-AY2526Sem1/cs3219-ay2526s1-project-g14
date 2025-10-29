@@ -40,8 +40,6 @@
     MongoDB connected
     ```
 
-
-
 #### Matching Service
 1. Switch to `matching-service` directory.
     ```
@@ -61,3 +59,33 @@
     [matching-service] listening on http://localhost:4100
     ```
 
+#### Collaboration Service and Question Service 
+1. Add a `docker-compose.yml` file in the root folder: 
+    ```
+    version: "3.8"
+    services:
+    question-service:
+        build: ./question-service
+        ports:
+        - "5052:5052"
+        environment:
+        - MONGODB_CONNECTION=your_connection_string
+        - JWT_SECRET=your_secret
+
+    collaboration-service:
+        build: ./collaboration-service
+        ports:
+        - "5051:5051"
+        environment:
+        - MONGODB_CONNECTION=your_connection_string
+        - JWT_SECRET=your_secret
+        - USER_SERVICE_URL=http://user-service:5050
+        - QUESTION_SERVICE_URL=http://question-service:5052
+        depends_on:
+        - question-service
+    ```
+
+2. Run all services on the same internal network.
+    ```
+    docker compose up --build
+    ```
