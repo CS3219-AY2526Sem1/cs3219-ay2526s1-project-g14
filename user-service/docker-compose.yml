@@ -1,0 +1,11 @@
+version: "2.0"
+
+services:
+  user-service:
+    build: .
+    container_name: user-service-container
+    ports:
+      - "5050:5050"
+    env_file:
+      - .env.production
+    restart: always

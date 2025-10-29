@@ -1,0 +1,67 @@
+version: "3.9"
+
+services:
+  frontend:
+    build: ./frontend
+    container_name: frontend-container
+    ports:
+      - "3000:80"
+    env_file:
+      - ./frontend/.env.production
+    restart: always
+
+  user-service:
+    build: ./user-service
+    container_name: user-service-container
+    ports:
+      - "5050:5050"
+    env_file:
+      - ./user-service/.env.production
+    depends_on:
+      - matching-service
+    restart: always
+
+  question-service:
+    build: ./question-service
+    container_name: question-service-container
+    ports:
+      - "5052:5052"
+    env_file:
+      - ./question-service/.env.production
+    restart: always
+
+  collaboration-service:
+    build: ./collaboration-service
+    container_name: collaboration-service-container
+    ports:
+      - "5051:5051"
+    env_file:
+      - ./collaboration-service/.env.production
+    restart: always
+
+  matching-service:
+    build: ./matching-service
+    container_name: matching-service-container
+    ports:
+      - "5053:5053"
+    env_file:
+      - ./matching-service/.env.production
+    depends_on:
+      - redis
+    restart: always
+
+  user-question-service:
+    build: ./user-question-service
+    container_name: user-question-service-container
+    ports:
+      - "5054:5054"
+    env_file:
+      - ./user-question-service/.env.production
+    restart: always
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    restart: always
