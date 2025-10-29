@@ -13,8 +13,7 @@ const userAttemptSchema = new mongoose.Schema(
       required: true
     },
     questionId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "question",
+      type: Number,
       required: true
     },
     submittedBy: {

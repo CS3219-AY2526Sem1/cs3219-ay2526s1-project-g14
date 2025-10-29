@@ -29,6 +29,41 @@ exports.getUserById = async (req, res) => {
   }
 };
 
+// /user/batch
+exports.getUsersByIds = async (req, res) => {
+  try {
+    const { ids } = req.body;
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Request body must contain a non-empty 'ids' array.",
+      });
+    }
+
+    const validIds = ids.filter(id => mongoose.Types.ObjectId.isValid(id));
+    if (validIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No valid user IDs provided.",
+      });
+    }
+
+    const users = await User.find(
+      { _id: { $in: validIds } },
+      { username: 1, email: 1 } 
+    ).lean();
+
+    res.status(200).json({
+      success: true,
+      users,
+    });
+  } catch (err) {
+    console.error("Error fetching users batch:", err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
 exports.updateUsername = async (req, res) => {
   try {
     const userId = req.user.id;
