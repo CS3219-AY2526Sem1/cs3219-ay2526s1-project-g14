@@ -1,6 +1,8 @@
 const mongoose = require("mongoose");
-const UserAttempt = require("../model/userAttemptModel");
-const User = require("../model/userModel");
+const axios = require("axios");
+
+const UserAttempt = require("../models/userAttemptModel");
+const USER_SERVICE_URL = process.env.USER_SERVICE_URL || 'http://localhost:5000';
 
 const DAYS = 30;
 
@@ -75,10 +77,14 @@ exports.getLeaderboard = async (req, res) => {
     const limit = 50;
     const results = await aggregateBase({ type, limit });
 
-    const users = await User.find(
-      { _id: { $in: results.map((s) => s._id) } },
-      { username: 1 }
-    ).lean();
+    let users = [];
+    try {
+      const ids = results.map((s) => s._id);
+      const { data } = await axios.post(`${USER_SERVICE_URL}/user/batch`, { ids }); 
+      users = data.users || [];
+    } catch (err) {
+      console.error("Failed to fetch users from user-service:", err.message);
+    }
 
     const userMap = Object.fromEntries(users.map((u) => [u._id.toString(), u.username]));
 
@@ -128,10 +134,14 @@ exports.getQuickLeaderboard = async (req, res) => {
       return res.status(200).json({ success: true, result: [] });
     }
 
-    const users = await User.find(
-      { _id: { $in: all.map((s) => s._id) } },
-      { username: 1 }
-    ).lean();
+    let users = [];
+    try {
+      const ids = results.map((s) => s._id);
+      const { data } = await axios.post(`${USER_SERVICE_URL}/user/batch`, { ids }); 
+      users = data.users || [];
+    } catch (err) {
+      console.error("Failed to fetch users from user-service:", err.message);
+    }
 
     const userMap = Object.fromEntries(users.map((u) => [u._id.toString(), u.username]));
     const sorted = all.sort((a, b) => b.score - a.score);

@@ -83,6 +83,19 @@
         - QUESTION_SERVICE_URL=http://question-service:5052
         depends_on:
         - question-service
+    
+    attempt-service:
+        build: ./attempt-service
+        ports:
+        - "5053:5053"
+        environment:
+        - MONGODB_CONNECTION=your_connection_string
+        - JWT_SECRET=your_secret
+        - USER_SERVICE_URL=http://user-service:5050
+        - QUESTION_SERVICE_URL=http://question-service:5052
+        - COLLABORATION_SERVICE_URL=http://collaboration-service:5051
+        depends_on:
+        - collaboration-service
     ```
 
 2. Run all services on the same internal network.

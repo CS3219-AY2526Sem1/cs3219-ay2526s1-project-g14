@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const axios = require("axios");
 
-const UserAttempt = require("../model/userAttemptModel.js");
+const UserAttempt = require("../models/userAttemptModel.js");
 
 const COLLABORATION_SERVICE_URL = process.env.COLLABORATION_SERVICE_URL || 'http://localhost:5051';
 
