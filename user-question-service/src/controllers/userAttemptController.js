@@ -1,4 +1,7 @@
 const UserAttempt = require("../models/userAttemptModel.js");
+const axios = require("axios");
+
+const QUESTION_SERVICE_URL = process.env.QUESTION_SERVICE_URL || "http://localhost:5052";
 
 exports.saveAttempt = async (req, res) => {
   try {
@@ -61,11 +64,36 @@ exports.saveAttempt = async (req, res) => {
 exports.getUserAttempts = async (req, res) => {
   try {
     const userId = req.user.id;
-    const attempts = await UserAttempt.find({ userId })
-      .populate("questionId", "title difficulty topic")
-      .sort({ createdAt: -1 });
 
-    res.status(200).json({ success: true, result: attempts });
+    const attempts = await UserAttempt.find({ userId })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    if (!attempts.length) {
+      return res.status(200).json({ success: true, result: [] });
+    }
+
+    const questionIds = attempts.map((a) => a.questionId);
+
+    const questionRequests = questionIds.map((id) =>
+      axios
+        .get(`${QUESTION_SERVICE_URL}/questions/internal/${id}`)
+        .then((res) => ({ id, ...res.data }))
+        .catch((err) => {
+          console.error(`Failed to fetch question ${id}:`, err.message);
+          return { id, title: "Unknown", difficulty: "N/A", topic: "N/A" };
+        })
+    );
+
+    const questions = await Promise.all(questionRequests);
+    const questionMap = Object.fromEntries(questions.map((q) => [q.id, q]));
+
+    const merged = attempts.map((a) => ({
+      ...a,
+      question: questionMap[a.questionId] || null,
+    }));
+
+    res.status(200).json({ success: true, result: merged });
   } catch (err) {
     console.error("Error fetching attempts:", err);
     res.status(500).json({ success: false, error: err.message });

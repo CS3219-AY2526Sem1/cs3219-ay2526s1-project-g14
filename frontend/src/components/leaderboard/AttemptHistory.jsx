@@ -38,7 +38,7 @@ const AttemptHistory = () => {
               {displayed.map((a, i) => (
                 <Box key={i} className={styles.attemptRow}>
                   <Typography className={styles.attemptQuestion}>
-                    {a.questionId.title}
+                    {a.question.title}
                   </Typography>
                   <Typography className={a.status ? styles.pass : styles.fail}>
                     {a.status ? "Passed" : "Failed"}

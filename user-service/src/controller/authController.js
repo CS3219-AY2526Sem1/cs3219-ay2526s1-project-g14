@@ -17,9 +17,6 @@ const register = async (req, res) => {
       if (existingUser.email === email) {
         return res.status(400).json({ message: "Email already registered" });
       }
-      if (existingUser.username === username) {
-        return res.status(400).json({ message: "Username already taken" });
-      }
     }
 
     let pending = await TempUser.findOne({ email });
@@ -142,16 +139,26 @@ const login = async (req, res) => {
 
 const upsertFirebase = async (req, res) => {
   try {
-    let newUser = false;
     const { firebaseUid, email, username } = req.body;
 
     if (!firebaseUid || !email || !username) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    let user = await User.findOne({ $or: [{ firebaseUid }, { email }] });
+    let user = await User.findOne({
+      $or: [{ firebaseUid }, { email }],
+    });
 
-    if (!user) {
+    if (user) {
+      if (!user.firebaseUid) {
+        user.firebaseUid = firebaseUid;
+        await user.save();
+        console.log(`Linked existing user ${email} with Firebase UID`);
+      } else {
+        console.log(`Firebase user login: ${email}`);
+      }
+    } else {
+
       user = new User({
         firebaseUid,
         email,
@@ -160,9 +167,6 @@ const upsertFirebase = async (req, res) => {
       });
       await user.save();
       console.log("Firebase user registered:", email);
-    } else {
-      newUser = true;
-      console.log("Firebase user login:", email);
     }
 
     const token = generateToken(user);
@@ -172,9 +176,9 @@ const upsertFirebase = async (req, res) => {
       secure: false,
       sameSite: "lax",
     });
-    
+
     res.status(200).json({
-      message: newUser ? "Firebase login successful" : "Firebase user registered successfully",
+      message: user.firebaseUid ? "Firebase login successful" : "Firebase user registered successfully",
       token,
       user: {
         id: user._id,

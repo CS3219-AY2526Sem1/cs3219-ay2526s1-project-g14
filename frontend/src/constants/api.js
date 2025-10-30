@@ -6,8 +6,8 @@ export const API = {
     // Authentication routes
     LOGIN: "/auth/login",
     REGISTER: "/auth/register",
-    RESEND_OTP: "/auth/resend-otp",
-    VERIFY_OTP: "/auth/verify-otp",
+    RESEND_OTP: "/auth/resendOtp",
+    VERIFY_OTP: "/auth/verifyOtp",
     FIREBASE_AUTH: "/auth/firebase",
 
     // user routes

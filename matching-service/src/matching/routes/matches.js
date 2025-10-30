@@ -12,7 +12,7 @@ const {
 const axios = require("axios");
 const r = Router();
 
-const COLLAB_URL = process.env.COLLAB_SERVICE_URL || "http://localhost:5051"; // backend that serves /collaboration/session
+const COLLAB_URL = process.env.COLLABORATION_SERVICE_URL || "http://localhost:5051"; // backend that serves /collaboration/session
 const MATCH_TTL_SECONDS = Number(process.env.MATCH_REQUEST_TTL_SECONDS || 60);
 
 /**
