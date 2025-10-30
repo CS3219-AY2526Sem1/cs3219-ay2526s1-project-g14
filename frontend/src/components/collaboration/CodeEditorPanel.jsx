@@ -20,12 +20,13 @@ import Editor from '@monaco-editor/react';
 import collaborationService from '../../services/collaborationService';
 import codeExecutionService from '../../services/codeExecutionService';
 
-export default function CodeEditorPanel({ 
-    sessionId, 
-    code: parentCode, 
+export default function CodeEditorPanel({
+    sessionId,
+    code: parentCode,
     language: parentLanguage,
     onCodeChange,
-    onLanguageChange 
+    onLanguageChange,
+    handleSaveCode
 }) {
     const [code, setCode] = useState(parentCode || '');
     const [language, setLanguage] = useState(parentLanguage || 'javascript');
@@ -63,10 +64,27 @@ export default function CodeEditorPanel({
         editorRef.current = editor;
     };
 
+    const handleSubmitCode = async () => {
+        try {
+            setIsExecuting(true);
+            setShowOutput(true);
+            const result = await codeExecutionService.executeCode(code, language);
+            console.log('Submit code Execution result:', result);
+            console.log('Submit code showOutput:', true);
+
+            await handleSaveCode(result.output);
+
+        } catch (err) {
+            console.error("Error submitting attempt:", err);
+        } finally {
+            setIsExecuting(false);
+        }
+    };
+
     const handleRunCode = async () => {
         setIsExecuting(true);
         setShowOutput(true);
-        
+
         try {
             const result = await codeExecutionService.executeCode(code, language);
             console.log('Execution result:', result);
@@ -106,10 +124,10 @@ export default function CodeEditorPanel({
     };
 
     return (
-        <Box sx={{ 
-            flexGrow: 1, 
-            p: 2, 
-            display: "flex", 
+        <Box sx={{
+            flexGrow: 1,
+            p: 2,
+            display: "flex",
             flexDirection: "column",
             overflow: "auto",
             minHeight: 0
@@ -152,6 +170,18 @@ export default function CodeEditorPanel({
                             }
                         }}>
                         {isExecuting ? 'Running...' : 'Run Code'}
+                    </Button>
+                    <Button
+                        variant="contained"
+                        color="success"
+                        onClick={handleSubmitCode}
+                        disabled={isExecuting || !code.trim()}
+                        sx={{
+                            ml: 1,
+                            "&:hover": { backgroundColor: "#2e7d32" },
+                        }}
+                    >
+                        Submit
                     </Button>
                 </Box>
             </Box>
@@ -201,123 +231,123 @@ export default function CodeEditorPanel({
 
                 {/* Output Panel */}
                 {executionResult && (
-                <Paper
-                    elevation={0}
-                    sx={{
-                        flex: showOutput ? '0 0 280px' : '0 0 50px',
-                        border: '1px solid #e0e0e0',
-                        borderRadius: 1,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        overflow: 'hidden'
-                    }}
-                >
-                    <Box
+                    <Paper
+                        elevation={0}
                         sx={{
+                            flex: showOutput ? '0 0 280px' : '0 0 50px',
+                            border: '1px solid #e0e0e0',
+                            borderRadius: 1,
                             display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            p: 1,
-                            bgcolor: '#f5f5f5',
-                            borderBottom: '1px solid #e0e0e0'
+                            flexDirection: 'column',
+                            overflow: 'hidden'
                         }}
                     >
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Typography variant="subtitle2" fontWeight="bold">
-                                Output
-                            </Typography>
-                            {executionResult && (
-                                <Typography variant="caption" color="text.secondary">
-                                    ({executionResult.executionTime})
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                p: 1,
+                                bgcolor: '#f5f5f5',
+                                borderBottom: '1px solid #e0e0e0'
+                            }}
+                        >
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Typography variant="subtitle2" fontWeight="bold">
+                                    Output
                                 </Typography>
-                            )}
-                        </Box>
-                        <Box>
-                            <IconButton size="small" onClick={handleClearOutput} title="Clear output">
-                                <ClearIcon fontSize="small" />
-                            </IconButton>
-                            <IconButton size="small" onClick={handleToggleOutput} title={showOutput ? "Minimize output" : "Expand output"}>
-                                {showOutput ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                            </IconButton>
-                        </Box>
-                    </Box>
-
-                    {showOutput && (
-                    <Box
-                        sx={{
-                            p: 2,
-                            fontFamily: 'monospace',
-                            fontSize: '13px',
-                            bgcolor: '#1e1e1e',
-                            color: '#d4d4d4',
-                            overflowY: 'auto',
-                            overflowX: 'hidden',
-                            flex: 1,
-                            minHeight: 0,
-                            '&::-webkit-scrollbar': {
-                                width: '8px',
-                            },
-                            '&::-webkit-scrollbar-track': {
-                                background: '#2e2e2e',
-                            },
-                            '&::-webkit-scrollbar-thumb': {
-                                background: '#555',
-                                borderRadius: '4px',
-                            },
-                            '&::-webkit-scrollbar-thumb:hover': {
-                                background: '#777',
-                            }
-                        }}
-                    >
-                            {isExecuting && (
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: '#4CAF50' }}>
-                                    <CircularProgress size={16} color="inherit" />
-                                    <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
-                                        Executing code...
+                                {executionResult && (
+                                    <Typography variant="caption" color="text.secondary">
+                                        ({executionResult.executionTime})
                                     </Typography>
-                                </Box>
-                            )}
+                                )}
+                            </Box>
+                            <Box>
+                                <IconButton size="small" onClick={handleClearOutput} title="Clear output">
+                                    <ClearIcon fontSize="small" />
+                                </IconButton>
+                                <IconButton size="small" onClick={handleToggleOutput} title={showOutput ? "Minimize output" : "Expand output"}>
+                                    {showOutput ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                                </IconButton>
+                            </Box>
+                        </Box>
 
-                            {!isExecuting && !executionResult && (
-                                <Typography variant="body2" sx={{ color: '#888', fontFamily: 'monospace' }}>
-                                    Click "Run Code" to see output here
-                                </Typography>
-                            )}
-
-                            {!isExecuting && executionResult && (
-                                <>
-                                    {executionResult.output && (
-                                        <Box sx={{ mb: 1 }}>
-                                            <Typography variant="caption" sx={{ color: '#4CAF50', fontWeight: 'bold' }}>
-                                                OUTPUT:
-                                            </Typography>
-                                            <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                                                {executionResult.output}
-                                            </pre>
-                                        </Box>
-                                    )}
-
-                                    {executionResult.error && (
-                                        <Box>
-                                            <Typography variant="caption" sx={{ color: '#f44336', fontWeight: 'bold' }}>
-                                                ERROR:
-                                            </Typography>
-                                            <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: '#f44336' }}>
-                                                {executionResult.error}
-                                            </pre>
-                                        </Box>
-                                    )}
-
-                                    {executionResult.success && !executionResult.output && (
-                                        <Typography variant="body2" sx={{ color: '#4CAF50', fontFamily: 'monospace' }}>
-                                            ✓ Code executed successfully (no output)
+                        {showOutput && (
+                            <Box
+                                sx={{
+                                    p: 2,
+                                    fontFamily: 'monospace',
+                                    fontSize: '13px',
+                                    bgcolor: '#1e1e1e',
+                                    color: '#d4d4d4',
+                                    overflowY: 'auto',
+                                    overflowX: 'hidden',
+                                    flex: 1,
+                                    minHeight: 0,
+                                    '&::-webkit-scrollbar': {
+                                        width: '8px',
+                                    },
+                                    '&::-webkit-scrollbar-track': {
+                                        background: '#2e2e2e',
+                                    },
+                                    '&::-webkit-scrollbar-thumb': {
+                                        background: '#555',
+                                        borderRadius: '4px',
+                                    },
+                                    '&::-webkit-scrollbar-thumb:hover': {
+                                        background: '#777',
+                                    }
+                                }}
+                            >
+                                {isExecuting && (
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: '#4CAF50' }}>
+                                        <CircularProgress size={16} color="inherit" />
+                                        <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+                                            Executing code...
                                         </Typography>
-                                    )}
-                                </>
-                            )}
-                    </Box>
-                    )}
-                </Paper>
+                                    </Box>
+                                )}
+
+                                {!isExecuting && !executionResult && (
+                                    <Typography variant="body2" sx={{ color: '#888', fontFamily: 'monospace' }}>
+                                        Click "Run Code" to see output here
+                                    </Typography>
+                                )}
+
+                                {!isExecuting && executionResult && (
+                                    <>
+                                        {executionResult.output && (
+                                            <Box sx={{ mb: 1 }}>
+                                                <Typography variant="caption" sx={{ color: '#4CAF50', fontWeight: 'bold' }}>
+                                                    OUTPUT:
+                                                </Typography>
+                                                <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                                                    {executionResult.output}
+                                                </pre>
+                                            </Box>
+                                        )}
+
+                                        {executionResult.error && (
+                                            <Box>
+                                                <Typography variant="caption" sx={{ color: '#f44336', fontWeight: 'bold' }}>
+                                                    ERROR:
+                                                </Typography>
+                                                <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: '#f44336' }}>
+                                                    {executionResult.error}
+                                                </pre>
+                                            </Box>
+                                        )}
+
+                                        {executionResult.success && !executionResult.output && (
+                                            <Typography variant="body2" sx={{ color: '#4CAF50', fontFamily: 'monospace' }}>
+                                                ✓ Code executed successfully (no output)
+                                            </Typography>
+                                        )}
+                                    </>
+                                )}
+                            </Box>
+                        )}
+                    </Paper>
                 )}
             </Box>
         </Box>

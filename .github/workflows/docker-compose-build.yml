@@ -1,0 +1,22 @@
+name: 🐳 Docker Compose Build (CI)
+
+on:
+  push:
+    branches: [ main, staging, docker ]
+  pull_request:
+    branches: [ main, staging, docker ]
+
+jobs:
+  docker-build:
+    runs-on: ubuntu-latest
+    name: Build All Docker Services
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build all services using docker-compose.yml
+        run: docker compose build
