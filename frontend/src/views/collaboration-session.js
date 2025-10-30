@@ -12,6 +12,8 @@ import TopBar from '../components/collaboration/TopBar';
 import QuestionPanel from '../components/collaboration/QuestionPanel/QuestionPanel';
 import CodeEditorPanel from '../components/collaboration/CodeEditorPanel';
 import ChatPanel from '../components/collaboration/ChatPanel';
+import userAttemptAxios from "../config/userAttemptAxios";
+import { API } from "../constants/api";
 
 export default function CollaborationSession() {
     const { sessionId } = useParams();
@@ -25,34 +27,34 @@ export default function CollaborationSession() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [question, setQuestion] = useState(null);
-    
+
     // code editor state
     const [code, setCode] = useState('');
     const [language, setLanguage] = useState('javascript');
-    
+
     // chat state
     const [chatMessages, setChatMessages] = useState([]);
     const [newMessage, setNewMessage] = useState('');
-    
+
     // connection state
     const [connectedUsers, setConnectedUsers] = useState([]);
     const [partnerUser, setPartnerUser] = useState(null);
-    
+
     // resize state
     const [chatHeight, setChatHeight] = useState(200);
     const isResizing = useRef(false);
-    
+
     useEffect(() => {
         // Redirect to home if no sessionId provided
         if (!sessionId) {
             navigate('/');
             return;
         }
-        
+
         // Setup socket listeners FIRST, then load session
         setupSocketListeners();
         loadSession();
-        
+
         return () => {
             collaborationService.disconnect();
         };
@@ -62,13 +64,13 @@ export default function CollaborationSession() {
     useEffect(() => {
         const handleMouseMove = (e) => {
             if (!isResizing.current) return;
-            
+
             const container = document.getElementById('right-panel-container');
             if (!container) return;
-            
+
             const containerRect = container.getBoundingClientRect();
             const newChatHeight = containerRect.bottom - e.clientY;
-            
+
             // Constrain between 150px and 80% of container height
             const maxHeight = containerRect.height * 0.8;
             if (newChatHeight >= 150 && newChatHeight <= maxHeight) {
@@ -104,17 +106,17 @@ export default function CollaborationSession() {
                 navigate('/');
                 return;
             }
-            
+
             const response = await collaborationService.getSession(sessionId);
             const sessionData = response.payload;
-            
+
             // Check if session is already completed or cancelled
             if (sessionData.status === 'completed' || sessionData.status === 'cancelled') {
                 setError('This session has ended and is no longer available');
                 setTimeout(() => navigate('/'), 2000);
                 return;
             }
-            
+
             setSession(sessionData);
             console.log("sessionData", sessionData);
             console.log("questionId from session:", sessionData.questionId);
@@ -122,13 +124,13 @@ export default function CollaborationSession() {
             setCode(sessionData.code || '');
             setLanguage(sessionData.language || 'javascript');
             setChatMessages(sessionData.chatHistory || []);
-            
+
             // Find partner
             const parts = sessionData.participants || [];
-            
+
             // Get userId from Redux - MUST have valid userId
             const myId = reduxUserId ? String(reduxUserId) : null;
-            
+
             if (!myId) {
                 console.error('No userId in Redux state!', { reduxUserId, username });
                 setError('Authentication error: Please log in again');
@@ -137,28 +139,28 @@ export default function CollaborationSession() {
 
             // Find partner (the other participant)
             const partnerParticipant = parts.find(p => String(p.userId) !== myId);
-            setPartnerUser(partnerParticipant ? { 
-                _id: partnerParticipant.userId, 
-                username: partnerParticipant.username || 'Partner' 
+            setPartnerUser(partnerParticipant ? {
+                _id: partnerParticipant.userId,
+                username: partnerParticipant.username || 'Partner'
             } : null);
 
             // Ensure socket is initialized before joining
             collaborationService.initializeSocket();
-            
+
             // Small delay to ensure socket connection is established
             await new Promise(resolve => setTimeout(resolve, 100));
 
             // Join socket room - ensure we have a valid userId
             const myJoinId = myId || '';
-            
+
             if (!myJoinId) {
                 setError('Unable to join session: User ID not found');
                 return;
             }
-            
+
             collaborationService.joinSession(sessionId, myJoinId, username);
 
-            
+
         } catch (err) {
             setError(err.message);
         } finally {
@@ -221,6 +223,33 @@ export default function CollaborationSession() {
         }
     };
 
+    const handleSaveCode = async (executionResult) => {
+        try {
+            const output = executionResult?.trim();
+
+            const testCases = question?.examples || [];
+            const passedCases = testCases.filter(tc => output === tc.output?.trim()).length;
+            const sid = sessionId.replace(/^room:/, '')
+            const payload = {
+                sessionId: sid,
+                code,
+                language,
+                testCasesPassed: passedCases,
+                totalTestCases: testCases.length,
+                timeTaken: 10000,
+            };
+
+            const { data } = await userAttemptAxios.post(API.USER_ATTEMPTS, payload);
+            console.log("Attempt saved:", data);
+
+            await handleEndSession();
+
+        } catch (err) {
+            console.error("Error submitting attempt:", err);
+            handleEndSession();
+        }
+    };
+
     if (loading) {
         return (
             <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
@@ -277,7 +306,7 @@ export default function CollaborationSession() {
                     <QuestionPanel question={question} />
                 </Box>
 
-                <Box 
+                <Box
                     id="right-panel-container"
                     sx={{
                         flexGrow: 1,
@@ -300,14 +329,14 @@ export default function CollaborationSession() {
                         minHeight: 0,
                         marginBottom: '8px'
                     }}>
-                        <CodeEditorPanel sessionId={sessionId} code={code} language={language} 
-                          onCodeChange={(newCode) => {
-                            collaborationService.sendCodeChange(sessionId, newCode, language);
-                          }}
-                          onLanguageChange={(newLang) => {
-                            setLanguage(newLang);
-                            collaborationService.sendCodeChange(sessionId, code, newLang);
-                          }}/>
+                        <CodeEditorPanel handleSaveCode={handleSaveCode} sessionId={sessionId} code={code} language={language}
+                            onCodeChange={(newCode) => {
+                                collaborationService.sendCodeChange(sessionId, newCode, language);
+                            }}
+                            onLanguageChange={(newLang) => {
+                                setLanguage(newLang);
+                                collaborationService.sendCodeChange(sessionId, code, newLang);
+                            }} />
                     </Box>
 
                     {/* Resize Handle */}
@@ -331,9 +360,9 @@ export default function CollaborationSession() {
                             }
                         }}
                     >
-                        <Box sx={{ 
-                            width: '60px', 
-                            height: '4px', 
+                        <Box sx={{
+                            width: '60px',
+                            height: '4px',
                             bgcolor: '#999',
                             borderRadius: '2px'
                         }} />

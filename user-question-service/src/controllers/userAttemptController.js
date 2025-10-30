@@ -2,43 +2,93 @@ const UserAttempt = require("../models/userAttemptModel.js");
 const axios = require("axios");
 
 const QUESTION_SERVICE_URL = process.env.QUESTION_SERVICE_URL || "http://localhost:5052";
+const COLLABORATION_SERVICE_URL = process.env.COLLABORATION_SERVICE_URL || "http://localhost:5051";
 
 exports.saveAttempt = async (req, res) => {
   try {
-    const {
+    let {
       sessionId,
-      participants,
-      questionId,
-      submittedBy,
-      code,
-      language,
+      code = "print(1+1)",
+      language = "python",
       testCasesPassed = 0,
       totalTestCases = 0,
       timeTaken
     } = req.body;
+
+    console.log("Attempt saved:", req.body);
+
+    if (!code || code.trim() === "") {
+      code = "print(1+1)";
+    }
     const userId = req.user.id;
-    
-    if (!participants || !Array.isArray(participants)) {
+
+    if (!sessionId) {
       return res.status(400).json({
         success: false,
-        message: "Invalid or missing participants array",
+        message: "Missing required fields (sessionId, code, language)"
       });
     }
 
-    const participantIds = participants.map(p => p.userId.toString());
+    let sessionData;
+    try {
+      const { data } = await axios.get(
+        `${COLLABORATION_SERVICE_URL}/collaboration/session/${sessionId}`,
+        {
+          headers: {
+            Authorization: req.headers.authorization,
+          },
+        }
+      ); sessionData = data?.payload;
+      if (!sessionData) throw new Error("Invalid session data");
+    } catch (err) {
+      console.error("Failed to fetch session:", err.message);
+      return res.status(404).json({ success: false, message: "Session not found" });
+    }
+
+    const { participants = [] } = sessionData;
+
+
+    let questionId = 1;
+    if (sessionData.questionId) {
+      if (typeof sessionData.questionId === "object") {
+        questionId = Number(sessionData.questionId.questionId) || 1;
+      } else if (!isNaN(Number(sessionData.questionId))) {
+        questionId = Number(sessionData.questionId);
+      }
+
+    }
+
+    if (!participants.length) {
+      return res.status(400).json({ success: false, message: "No participants found in session" });
+    }
+
+    const participantIds = participants.map((p) =>
+      typeof p.userId === "object" ? p.userId._id.toString() : p.userId.toString()
+    );
+
     if (!participantIds.includes(userId)) {
       return res.status(403).json({ success: false, message: "User not part of this session" });
     }
 
     const passed = totalTestCases > 0 && testCasesPassed === totalTestCases;
 
+    let questionData = null;
+    if (questionId) {
+      try {
+        const { data } = await axios.get(`${QUESTION_SERVICE_URL}/questions/internal/${questionId}`);
+        questionData = data?.payload || data;
+      } catch (err) {
+        console.warn("⚠️ Failed to fetch question info:", err.message);
+      }
+    }
+
     const attempts = await Promise.all(
-      participants.map((uid) =>
+      participants.map((p) =>
         UserAttempt.create({
           sessionId,
-          userId: uid,
+          userId: typeof p.userId === "object" ? p.userId._id : p.userId,
           questionId,
-          submittedBy,
+          submittedBy: userId,
           code,
           language,
           status: passed,
@@ -48,12 +98,21 @@ exports.saveAttempt = async (req, res) => {
         })
       )
     );
-    console.log("recorded attempts in attempt controller", attempts)
-    
+
+    console.log(`Recorded ${attempts.length} attempts for session ${sessionId}`);
+
     res.status(201).json({
       success: true,
-      message: "Attempt recorded for both users",
+      message: "Attempt recorded for all session participants",
       result: attempts,
+      question: questionData
+        ? {
+          id: questionData.questionId,
+          title: questionData.title,
+          difficulty: questionData.difficulty,
+          topic: questionData.topic,
+        }
+        : null,
     });
   } catch (err) {
     console.error("Error saving attempt:", err);
@@ -127,7 +186,7 @@ exports.getUserStats = async (req, res) => {
       attempts
         .filter((a) => a.status)
         .reduce((sum, a) => sum + (a.timeTaken || 0), 0) /
-        (passedAttempts || 1);
+      (passedAttempts || 1);
 
     res.status(200).json({
       success: true,
