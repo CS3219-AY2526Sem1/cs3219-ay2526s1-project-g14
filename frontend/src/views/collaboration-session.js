@@ -388,6 +388,16 @@ export default function CollaborationSession() {
                     </Box>
                 </Box>
             </Box>
+                <AiAssistantWidget
+                    sessionId={sessionId}
+                    userId={reduxUserId}
+                    username={username}
+                    questionId={question}          
+                    language={language}
+                    getCode={() => code}
+                    chatMessages={chatMessages}
+                    dockOffsetPx={120}            
+                />
         </Box>
     );
 }
