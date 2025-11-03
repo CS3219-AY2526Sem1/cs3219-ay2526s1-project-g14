@@ -14,6 +14,7 @@ import CodeEditorPanel from '../components/collaboration/CodeEditorPanel';
 import ChatPanel from '../components/collaboration/ChatPanel';
 import userAttemptAxios from "../config/userAttemptAxios";
 import { API } from "../constants/api";
+import AiAssistantWidget from '../components/ai/AiAssistantWidget';
 
 export default function CollaborationSession() {
     const { sessionId } = useParams();
