@@ -90,9 +90,7 @@ export const fetchUserAttempts = async () => {
 
 export const fetchUserStats = async (userId) => {
     try {
-        console.log("calling");
         const { data } = await userAttemptAxios.get(API.USER_STATS);
-        console.log(data);
         return data.result;
     } catch (error) {
         console.error("Error fetching user stats:", error);
