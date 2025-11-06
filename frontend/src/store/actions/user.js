@@ -63,7 +63,6 @@ export const handleFetchUserStats = () => async (dispatch) => {
   try {
     dispatch({ type: USER_LOADING });
     const data = await fetchUserStats();
-    console.log(data)
     dispatch({ type: SET_USER_STATS, payload: data });
     return { success: true, data };
   } catch (error) {
@@ -76,7 +75,6 @@ export const handleFetchUserAttempts = () => async (dispatch) => {
   try {
     dispatch({ type: USER_LOADING });
     const data = await fetchUserAttempts();
-    console.log(data)
     dispatch({ type: SET_USER_ATTEMPTS, payload: data });
     return { success: true, data };
   } catch (error) {
