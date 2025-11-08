@@ -65,3 +65,15 @@ services:
     ports:
       - "6379:6379"
     restart: always
+
+  ai-service:
+    build:
+      context: ./ai-service
+    container_name: ai-service-container
+    ports:
+      - "5055:5055"       
+    env_file:
+      - ./ai-service/.env.production
+    restart: always
+    depends_on:
+      - user-service

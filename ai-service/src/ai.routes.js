@@ -1,12 +1,13 @@
-const express = require("express");
-const router = express.Router();
+import { Router } from "express";
+
+const router = Router();
 
 async function getGenAI() {
   const mod = await import("@google/generative-ai");
   return mod.GoogleGenerativeAI;
 }
 
-// Build prompt from full context
+// Build prompt exactly as before
 function buildPrompt({ mode, questionTitle, questionText, topic, difficulty, code, language, userMessage }) {
   const header = [
     "You are a collaborative coding tutor inside a pair-programming app.",
@@ -21,27 +22,20 @@ function buildPrompt({ mode, questionTitle, questionText, topic, difficulty, cod
     questionText ? `Problem:\n${questionText}` : null,
     topic ? `Topic: ${topic}` : null,
     difficulty ? `Difficulty: ${difficulty}` : null,
-  ]
-    .filter(Boolean)
-    .join("\n");
+  ].filter(Boolean).join("\n");
 
-  const codeBlock = code
-    ? `\nCurrent Code (${language || "unknown"}):\n"""${code}"""`
-    : "";
+  const codeBlock = code ? `\nCurrent Code (${language || "unknown"}):\n"""${code}"""` : "";
 
   let task;
   switch (mode) {
     case "explain-question":
-      task =
-        "Task: Explain the question in your own words. Clarify inputs, outputs, and constraints; suggest a high-level approach and edge cases. Do NOT give the full solution.";
+      task = "Task: Explain the question in your own words. Clarify inputs, outputs, and constraints; suggest a high-level approach and edge cases. Do NOT give the full solution.";
       break;
     case "hint":
-      task =
-        "Task: Provide graduated hints (from gentle to specific) that nudge the user forward without writing the answer.";
+      task = "Task: Provide graduated hints (from gentle to specific) that nudge the user forward without writing the answer.";
       break;
     case "explain-code":
-      task =
-        "Task: Explain what the provided code does, point out issues, and suggest conceptual improvements. Do NOT rewrite full code.";
+      task = "Task: Explain what the provided code does, point out issues, and suggest conceptual improvements. Do NOT rewrite full code.";
       break;
     default:
       task = "Task: Provide helpful guidance without giving a full solution.";
@@ -73,7 +67,7 @@ router.post("/chat", async (req, res) => {
 
     const GoogleGenerativeAI = await getGenAI();
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
+    const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL || "gemini-2.5-flash-lite" });
 
     const prompt = buildPrompt({
       mode,
@@ -108,7 +102,7 @@ router.post("/translate", async (req, res) => {
 
     const GoogleGenerativeAI = await getGenAI();
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
+    const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL || "gemini-2.5-flash-lite" });
 
     const prompt = [
       "Translate the following code to the target language.",
@@ -128,4 +122,4 @@ router.post("/translate", async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;
