@@ -132,42 +132,6 @@ All responses follow a consistent JSON format:
 | `404` | Not found       | Question or session not found |
 | `500` | Server error    | Internal logic or DB issue    |
 
-
-## Docker Deployment
-1. Build the Docker image
-  ```
-  docker build -t question-service .
-  ```
-
-2. Run the container
-  ```
-  docker run -d \
-  --name attempt-service \
-  --env-file .env \
-  -p 5053:5053 \
-  attempt-service
-  ```
-  or
-  ```
-  docker run -p 5053:5053 \
-  -e MONGODB_CONNECTION="your_connection_string" \
-  -e JWT_SECRET="your_secret" \
-  -e USER_SERVICE_URL="http://user-service:5050" \
-  -e QUESTION_SERVICE_URL="http://question-service:5052" \
-  -e COLLABORATION_SERVICE_URL="http://question-service:5051" \
-  attempt-service
-  ```
-
-3. Verify it's running 
-  ```
-  curl http://localhost:5053/health
-  ```
-
-4. View logs if needed
-  ```
-  docker logs -f attempt-service
-  ```
-
 ## Testing
 You can test endpoints using Postman, cURL, or any REST client.
 Ensure valid Authorization headers when testing user-protected routes.

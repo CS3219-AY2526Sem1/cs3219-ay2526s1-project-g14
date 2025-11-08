@@ -21,6 +21,15 @@ Steps:
 
 3. Access the frontend on `http://localhost:3000`.
 
+4. Verify the services are running:
+    ```
+    http://localhost:<PORT>/health/services
+    ```
+    - Example: `http://localhost:5053/health/services` should show:
+        ```
+        {"matching":"live","question":"live","user":"live","userquestion":"live","collaboration":"live"}
+        ```
+
 ### Services Overview
 | Service               | Port | Description                              |
 | --------------------- | ---- | ---------------------------------------- |
