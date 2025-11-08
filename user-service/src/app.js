@@ -11,7 +11,6 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
 app.use(express.json());
-app.use('/ai', require('./ai/ai.routes'));
 
 app.use('/', router);
 
