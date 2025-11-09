@@ -3,7 +3,7 @@
 ' avoid problems with angled crows feet
 
 entity "User" as user {
-    *user_id: string <<generated>>
+    *_id: string <<generated>>
     --
     firebaseUid: string
     *username: string
@@ -13,7 +13,7 @@ entity "User" as user {
 }
 
 entity "Question" as question {
-    *question_id: string <<generated>>
+    *_id: string <<generated>>
     --
     *title: string
     *description: string
@@ -24,7 +24,7 @@ entity "Question" as question {
 }
 
 entity "Session" as session {
-    *session_id: string <<generated>>
+    *_id: string <<generated>>
     --
     *participants: [ { userId: string, joinedAt: datetime } ] 
     *questionId: string
@@ -37,7 +37,7 @@ entity "Session" as session {
 }
 
 entity "User Attempt" as userattempt {
-    *user_attempt_id: string <<generated>>
+    *_id: string <<generated>>
     --
     *sessionId: string 
     *userId: string
@@ -76,10 +76,23 @@ enum RoleEnum {
     Admin
 }
 
-session::_id ||--|{ user::user_id
-question::_id ||--o{ session::question_id
+' === Relationships ===
+' Session references a Question
+session::questionId }o--|| question::_id : refers_to
 
-' Link fields to enums
+' Session participants reference Users (embedded array)
+session::participants }o--|| user::_id : includes
+
+' UserAttempt links to User
+userattempt::userId }o--|| user::_id : by
+
+' UserAttempt links to Question
+userattempt::questionId }o--|| question::_id : attempts
+
+' UserAttempt links to Session
+userattempt::sessionId }o--|| session::_id : from
+
+' === Enums relationships ===
 user::role -- RoleEnum
 question::difficulty -- DifficultyEnum
 session::status -- StatusEnum
