@@ -138,7 +138,6 @@ exports.getQuickLeaderboard = async (req, res) => {
   try {
     const userId = req.user?.id;
     const all = await aggregateBase({ type: "overall" });
-    const token = req.headers.authorization;
 
     if (!all.length) {
       return res.status(200).json({ success: true, result: [] });
@@ -146,22 +145,26 @@ exports.getQuickLeaderboard = async (req, res) => {
 
     let users = [];
     try {
-      const ids = results.map((s) => s._id);
+      const ids = all.map((s) => s._id);
+      const token = req.headers.authorization;
+
       const { data } = await axios.post(
         `${USER_SERVICE_URL}/userbulk/batch`,
         { ids },
         {
-          headers: {
-            Authorization: token,
-          },
+          headers: { Authorization: token },
         }
       );
+
       users = data.users || [];
     } catch (err) {
       console.error("Failed to fetch users from user-service:", err.message);
     }
 
-    const userMap = Object.fromEntries(users.map((u) => [u._id.toString(), u.username]));
+    const userMap = Object.fromEntries(
+      users.map((u) => [u._id.toString(), u.username])
+    );
+
     const sorted = all.sort((a, b) => b.score - a.score);
 
     const ranked = sorted.map((s, i) => ({

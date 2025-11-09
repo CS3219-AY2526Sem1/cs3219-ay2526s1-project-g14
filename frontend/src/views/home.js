@@ -3,11 +3,9 @@ import { useSelector, useDispatch } from "react-redux";
 import { Box } from "@mui/material";
 import Welcome from "../components/home/Welcome";
 import MatchingBox from "../components/home/MatchingBox";
-import RecentQuestions from "../components/home/RecentQuestions";
 import QuickLeaderboard from "../components/home/leaderboard/QuickLeaderboard";
 import { fetchQuickLeaderboard } from "../store/actions/leaderboard";
 import { fetchTopics } from "../controller/questionsController";
-// import { fetchRecentQuestions } from "../controller/questionsController";
 
 export default function Home() {
     const username = useSelector((state) => state.auth.username);
@@ -17,8 +15,6 @@ export default function Home() {
     const [topics, setTopics] = useState([]);
     const [selectedTopic, setSelectedTopic] = useState("");
     const [selectedDifficulty, setSelectedDifficulty] = useState("");
-    const [recentQuestions, setRecentQuestions] = useState([]);
-    const [loadingRecent, setLoadingRecent] = useState(false);
 
     useEffect(() => {
         fetchTopics().then(setTopics).catch(console.error);

@@ -322,21 +322,6 @@ export default function MatchingBox({
                          loading ? <CircularProgress size={24} color="inherit" /> : 
                          'Find Partner'}
                     </Button>
-                    
-                    <Button
-                        variant="contained"
-                        sx={{
-                            backgroundColor: "#EDF2FF",
-                            color: "black",
-                            textTransform: "none",
-                            transition: "0.3s",
-                            "&:hover": { backgroundColor: "#D6E0FF" },
-                        }}
-                        onClick={handlePracticeAlone}
-                        disabled={loading || !selectedTopic || !selectedDifficulty || !questionsAvailable || checkingQuestions}
-                    >
-                        Practice Alone
-                    </Button>
                 </>
             )}
         </Box>

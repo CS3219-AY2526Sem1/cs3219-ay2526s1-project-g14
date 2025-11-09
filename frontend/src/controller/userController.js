@@ -1,5 +1,6 @@
 import { API } from '../constants/api'
 import axiosInstance from "../config/axios"
+import userAttemptAxios from "../config/userAttemptAxios"
 
 export const saveUsername = async (username) => {
     try {
@@ -77,9 +78,9 @@ export const deleteAccount = async () => {
     }
 };
 
-export const fetchUserAttempts = async (userId) => {
+export const fetchUserAttempts = async () => {
     try {
-        const { data } = await axiosInstance.get(API.USER_ATTEMPTS);
+        const { data } = await userAttemptAxios.get(API.USER_ATTEMPTS);
         return data.result;
     } catch (error) {
         console.error("Error fetching user attempts:", error);
@@ -89,9 +90,7 @@ export const fetchUserAttempts = async (userId) => {
 
 export const fetchUserStats = async (userId) => {
     try {
-        console.log("calling");
-        const { data } = await axiosInstance.get(API.USER_STATS);
-        console.log(data);
+        const { data } = await userAttemptAxios.get(API.USER_STATS);
         return data.result;
     } catch (error) {
         console.error("Error fetching user stats:", error);

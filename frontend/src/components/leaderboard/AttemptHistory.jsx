@@ -1,69 +1,117 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Card, CardContent, Typography, Box, Button } from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import {
+  Card,
+  CardContent,
+  Typography,
+  Box,
+  Chip,
+  Stack,
+} from "@mui/material";
+import DifficultyChip from "../DifficultyChip";
 import { handleFetchUserAttempts } from "../../store/actions/user";
-import styles from "./styles.module.css";
 
 const AttemptHistory = () => {
   const dispatch = useDispatch();
   const { attempts, loading } = useSelector((s) => s.user);
-  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     dispatch(handleFetchUserAttempts());
   }, [dispatch]);
 
-  const displayed = showAll ? attempts : attempts?.slice(0, 3) || [];
-
   return (
-    <Card className={styles.historyCard}>
-      <CardContent sx={{ p: 2 }}>
-        <Typography variant="subtitle1" className={styles.title}>
+    <Card
+      elevation={3}
+      sx={{
+        borderRadius: 3,
+        overflow: "hidden",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <CardContent
+        sx={{
+          p: 3,
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          bgcolor: "#FFFFFF",
+        }}
+      >
+        <Typography variant="h6" fontWeight={600} mb={2}>
           Recent Attempts
         </Typography>
 
         {loading ? (
-          <Typography color="text.secondary" mt={1}>
-            Loading...
-          </Typography>
+          <Typography color="text.secondary">Loading...</Typography>
         ) : !attempts?.length ? (
-          <Typography color="text.secondary" mt={1}>
-            No attempts yet.
-          </Typography>
+          <Typography color="text.secondary">No attempts yet.</Typography>
         ) : (
-          <>
-            <Box className={styles.attemptList}>
-              {displayed.map((a, i) => (
-                <Box key={i} className={styles.attemptRow}>
-                  <Typography className={styles.attemptQuestion}>
-                    {a.questionId.title}
-                  </Typography>
-                  <Typography className={a.status ? styles.pass : styles.fail}>
-                    {a.status ? "Passed" : "Failed"}
-                  </Typography>
-                </Box>
-              ))}
-            </Box>
+          <Stack
+            direction="row"
+            spacing={1.5}
+            sx={{
+              flexGrow: 1,
+              overflowX: "auto", 
+              overflowY: "hidden",
+              pb: 1,
+              "&::-webkit-scrollbar": {
+                height: 6,
+              },
+              "&::-webkit-scrollbar-thumb": {
+                bgcolor: "#c1c1c1",
+                borderRadius: 3,
+              },
+            }}
+          >
+            {attempts.map((a, i) => {
+              const topics = a?.question?.payload?.topic || [];
 
-            {attempts.length > 3 && (
-              <Button
-                variant="text"
-                size="small"
-                endIcon={showAll ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                onClick={() => setShowAll((s) => !s)}
-                sx={{
-                  textTransform: "none",
-                  mt: 1,
-                  color: "#6c5ce7",
-                  fontSize: "0.8rem",
-                }}
-              >
-                {showAll ? "Show Less" : "View More"}
-              </Button>
-            )}
-          </>
+              return (
+                <Box
+                  key={i}
+                  flexShrink={0}
+                  width={260} 
+                  p={1.5}
+                  borderRadius={2}
+                  sx={{
+                    bgcolor: "#EDF2FF",
+                    transition: "0.2s",
+                    "&:hover": { boxShadow: 2 },
+                  }}
+                >
+                  <Typography
+                    variant="body1"
+                    fontWeight={600}
+                    noWrap
+                    sx={{ maxWidth: "100%" }}
+                  >
+                    {a?.question?.payload?.title || "Untitled Question"}
+                  </Typography>
+
+                  <Box display="flex" flexWrap="wrap" gap={1} mt={0.5}>
+                    <DifficultyChip
+                      difficulty={a?.question?.payload?.difficulty || "Unknown"}
+                    />
+                    {topics.map((t, idx) => (
+                      <Chip
+                        key={idx}
+                        label={t}
+                        size="small"
+                        variant="outlined"
+                        sx={{
+                          fontSize: "0.75rem",
+                          borderColor: "#bdbdbd",
+                          color: "#616161",
+                        }}
+                      />
+                    ))}
+                  </Box>
+                </Box>
+              );
+            })}
+          </Stack>
         )}
       </CardContent>
     </Card>

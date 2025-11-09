@@ -2,104 +2,44 @@
 # CS3219 Project (PeerPrep) - AY2526S1
 ## Group: G14
 
-### Note: 
-- You are required to develop individual microservices within separate folders within this repository.
-- The teaching team should be given access to the repositories as we may require viewing the history of the repository in case of any disputes or disagreements.
+PeerPrep is a distributed full-stack web application that enables collaborative coding practice between users. It uses a microservices architecture (User, Matching, Question, Collaboration, and User-Question services) with Docker for containerisation.
 
 ### Running the app
-#### Frontend 
-1. Switch to `frontend` directory.
-    ```
-    cd frontend
-    ```
-2. Install dependencies.
-    ```
-    npm install
-    ```
-3. Start the app locally.
-    ```
-    npm start
-    ```
+Prerequisites: 
+- [Docker](https://docs.docker.com/get-started/get-docker/) installed 
+- [Docker Compose](https://docs.docker.com/compose/)
 
-#### Database
-1. Switch to `backend` directory.
-    ```
-    cd backend
-    ```
-2. Install dependencies.
-    ```
-    npm install
-    ```
-3. Start the server.
-    ```
-    node server.js
-    ```
-4. You should see the message below if the connection is successful.
-    ```
-    Server is running on port 5000
-    MongoDB connected
-    ```
+Steps: 
+1. Add environment files.
+    - Each service requires its own `.env.production` file for configuration.
+    - These files are not committed for security reasons.
 
-#### Matching Service
-1. Switch to `matching-service` directory.
-    ```
-    cd matching-service
-    ```
-2. Install dependencies.
-    ```
-    npm install
-    ```
-3. Start the service.
-    ```
-    npm run dev
-    ```
-4. You should see the message below if the connection is successful.
-    ```
-    [redis] connected: redis://localhost:6379
-    [matching-service] listening on http://localhost:4100
-    ```
-
-#### Collaboration Service and Question Service 
-1. Add a `docker-compose.yml` file in the root folder: 
-    ```
-    version: "3.8"
-    services:
-        question-service:
-            build: ./question-service
-            ports:
-            - "5052:5052"
-            environment:
-            - MONGODB_CONNECTION=your_connection_string
-            - JWT_SECRET=your_secret
-
-        collaboration-service:
-            build: ./collaboration-service
-            ports:
-            - "5051:5051"
-            environment:
-            - MONGODB_CONNECTION=your_connection_string
-            - JWT_SECRET=your_secret
-            - USER_SERVICE_URL=http://user-service:5050
-            - QUESTION_SERVICE_URL=http://question-service:5052
-            - ATTEMPT_SERVICE_URL=http://attempt-service:5053
-            depends_on:
-            - question-service
-        
-        attempt-service:
-            build: ./attempt-service
-            ports:
-            - "5053:5053"
-            environment:
-            - MONGODB_CONNECTION=your_connection_string
-            - JWT_SECRET=your_secret
-            - USER_SERVICE_URL=http://user-service:5050
-            - QUESTION_SERVICE_URL=http://question-service:5052
-            - COLLABORATION_SERVICE_URL=http://collaboration-service:5051
-            depends_on:
-            - collaboration-service
-    ```
-
-2. Run all services on the same internal network.
+2. Build and run all services.
     ```
     docker compose up --build
     ```
+
+3. Access the frontend on `http://localhost:3000`.
+
+4. Verify the services are running:
+    ```
+    http://localhost:<PORT>/health/services
+    ```
+    - Example: `http://localhost:5053/health/services` should show:
+        ```
+        {"matching":"live","question":"live","user":"live","userquestion":"live","collaboration":"live"}
+        ```
+
+### Services Overview
+| Service               | Port | Description                              |
+| --------------------- | ---- | ---------------------------------------- |
+| Frontend              | 3000 | React web client                         |
+| User Service          | 5050 | Authentication and user management       |
+| Question Service      | 5052 | Coding question management               |
+| Collaboration Service | 5051 | Real-time code collaboration (WebSocket) |
+| Matching Service      | 5053 | User matchmaking logic                   |
+| User-Question Service | 5054 | User-question tracking and progress      |
+| AI Service            | 5055 | AI Chatbot                               |
+| Redis                 | 6379 | Caching and message broker               |
+
+

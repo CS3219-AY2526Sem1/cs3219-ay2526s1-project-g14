@@ -18,9 +18,9 @@ export const register = async (username, email, password) => {
             email,
             password,
         });
-        if (status === 200) 
+        if (status === 200)
             return { success: true };
-        if (status === 400) 
+        if (status === 400)
             return { success: false, message: data };
     } catch (e) {
         const errorMessage = e.response ? e.response.data.message : "Server error";

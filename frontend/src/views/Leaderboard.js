@@ -29,11 +29,33 @@ const Leaderboard = () => {
   return (
     <Fade in timeout={300}>
       <Box className={styles.pageWrapper}>
-        <Grid container spacing={2} className={styles.topSection}>
-          <Grid item xs={12} md={8}>
+        <Grid
+          container
+          spacing={2}
+          wrap="nowrap" 
+          className={styles.topSection}
+          sx={{ overflow: "hidden" }}
+        >
+          <Grid
+            item
+            xs="auto"
+            sx={{
+              flexShrink: 0, 
+            }}
+          >
             <UserStats />
           </Grid>
-          <Grid item xs={12} md={4}>
+
+          <Grid
+            item
+            xs
+            sx={{
+              flexGrow: 1,
+              minWidth: 0,
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
             <AttemptHistory />
           </Grid>
         </Grid>

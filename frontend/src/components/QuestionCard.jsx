@@ -8,7 +8,6 @@ export default function QuestionCard({ question }) {
             borderRadius={2}
             sx={{
                 backgroundColor: "white",
-                border: "1px solid black",
                 "&:hover": { boxShadow: "0 2px 8px rgba(54, 55, 56, 0.2)" },
             }}
         >
