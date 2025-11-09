@@ -8,17 +8,18 @@ exports.saveAttempt = async (req, res) => {
   try {
     let {
       sessionId,
-      code = "print(1+1)",
-      language = "python",
-      testCasesPassed = 0,
-      totalTestCases = 0,
+      questionId,
+      code,
+      language,
+      testCasesPassed,
+      totalTestCases,
       timeTaken
     } = req.body;
 
-    console.log("Attempt saved:", req.body);
+    console.log("Attempt saved in saveAttempt:", req.body);
 
     if (!code || code.trim() === "") {
-      code = "print(1+1)";
+      code = "// No code submitted";
     }
     const userId = req.user.id;
 
@@ -46,17 +47,6 @@ exports.saveAttempt = async (req, res) => {
     }
 
     const { participants = [] } = sessionData;
-
-
-    let questionId = 1;
-    if (sessionData.questionId) {
-      if (typeof sessionData.questionId === "object") {
-        questionId = Number(sessionData.questionId.questionId) || 1;
-      } else if (!isNaN(Number(sessionData.questionId))) {
-        questionId = Number(sessionData.questionId);
-      }
-
-    }
 
     if (!participants.length) {
       return res.status(400).json({ success: false, message: "No participants found in session" });

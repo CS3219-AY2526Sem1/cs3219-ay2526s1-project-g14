@@ -4,7 +4,6 @@ const socketService = require('../services/socketService');
 
 const USER_SERVICE_URL = process.env.USER_SERVICE_URL || 'http://localhost:5050';
 const QUESTION_SERVICE_URL = process.env.QUESTION_SERVICE_URL || 'http://localhost:5052';
-const ATTEMPT_SERVICE_URL = process.env.REACT_APP_USERQUESTION_URL || 'http://localhost:5054';
 
 exports.createSession = async (req, res) => {
     try {
@@ -213,39 +212,6 @@ exports.endSession = async (req, res) => {
             sessionId,
             timestamp: new Date()
         });
-
-        try {
-            // Prepare payload for attempt service
-            const payload = {
-                sessionId: session.sessionId,
-                participants: session.participants,
-                questionId: session.questionId,
-                submittedBy: userId,
-                code: session.code,
-                language: session.language,
-                testCasesPassed: 0,
-                totalTestCases: 0,
-                timeTaken: Math.round((Date.now() - new Date(session.startTime)) / 1000)
-            };
-            console.log("sending payload to attempt service", payload)
-
-            // POST to attempt service
-            const attemptResponse = await axios.post(
-                `${ATTEMPT_SERVICE_URL}/attempt`,
-                payload,
-                {
-                headers: {
-                    Authorization: req.headers.authorization,
-                },
-                }
-            );
-            console.log("Attempt service response:", attemptResponse.data);
-        } catch (attemptError) {
-            console.error(
-                "Error sending data to attempt service:",
-                attemptError.response?.data || attemptError.message
-            );
-        }
 
         res.status(200).json({
             success: true,

@@ -29,9 +29,9 @@
 
 ## Architecture Overview
 ```
-[ Collaboration Service ]
-        ↓ (on session end)
-    POST /attempt
+  On session end
+        ↓ 
+   POST /attempt
         ↓
 [ Attempt Service ]
     → Saves attempt for all participants
@@ -53,7 +53,7 @@
 ### Attempt routes (`/attempt`)
 | Method | Endpoint | Description                                           | 
 | ------ | -------- | ----------------------------------------------------- | 
-| `POST` | `/`      | Record an attempt for all session participants        | 
+| `POST` | `/`      | Record an attempt for a collaboration session participants        | 
 | `GET`  | `/`      | Retrieve user's past attempts (with question details) | 
 | `GET`  | `/stats` | Retrieve user's statistics                            | 
 

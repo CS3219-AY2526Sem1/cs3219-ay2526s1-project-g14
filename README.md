@@ -39,6 +39,7 @@ Steps:
 | Collaboration Service | 5051 | Real-time code collaboration (WebSocket) |
 | Matching Service      | 5053 | User matchmaking logic                   |
 | User-Question Service | 5054 | User-question tracking and progress      |
+| AI Service            | 5055 | AI Chatbot                               |
 | Redis                 | 6379 | Caching and message broker               |
 
 
