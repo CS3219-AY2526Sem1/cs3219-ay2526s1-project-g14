@@ -1,3 +1,11 @@
+/**
+ * AI Usage
+ * This file contains code enhanced with GitHub Copilot assistance.
+ * Specific improvements: connection state tracking, broadcasting logic, and comments.
+ * See /ai-usage-log.md for detailed attribution and modifications.
+ * Date: 2025-10-25
+ */
+
 const { Server } = require('socket.io');
 const Session = require('../models/sessionModel');
 
