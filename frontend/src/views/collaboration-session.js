@@ -1,3 +1,11 @@
+/**
+ * AI Usage
+ * This file contains code enhanced with GitHub Copilot assistance.
+ * Specific improvements: resizable chat panel, WebSocket cleanup, and comments.
+ * See /ai-usage-log.md for detailed attribution and modifications.
+ * Date: 2025-10-28
+ */
+
 import { useState, useEffect, useRef } from 'react';
 import { useSelector } from "react-redux";
 import { useParams, useNavigate } from 'react-router-dom';

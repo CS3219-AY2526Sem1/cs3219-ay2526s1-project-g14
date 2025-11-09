@@ -1,3 +1,11 @@
+/**
+ * AI Usage
+ * This file contains code enhanced with GitHub Copilot assistance.
+ * Specific improvements: endSessionAndWait Promise pattern, event listeners, and comments.
+ * See /ai-usage-log.md for detailed attribution and modifications.
+ * Date: 2025-10-28
+ */
+
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { MATCHING_API } from '../constants/api';
