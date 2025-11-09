@@ -157,7 +157,7 @@ exports.getUserStats = async (req, res) => {
     if (!attempts.length)
       return res.status(200).json({
         success: true,
-        result: { totalAttempts: 0, passedAttempts: 0, successRate: 0, avgPassingRate: 0, avgTimeToPass: 0 },
+        result: { totalAttempts: 0, passedAttempts: 0, successRate: 0, avgPassingRate: 0, avgTime: 0 },
       });
 
     const total = attempts.length;
@@ -172,11 +172,10 @@ exports.getUserStats = async (req, res) => {
             : 0),
         0
       ) / total;
-    const avgTimeToPass =
+    const avgTime =
       attempts
-        .filter((a) => a.status)
         .reduce((sum, a) => sum + (a.timeTaken || 0), 0) /
-      (passedAttempts || 1);
+      (total || 1);
 
     res.status(200).json({
       success: true,
@@ -185,7 +184,7 @@ exports.getUserStats = async (req, res) => {
         passedAttempts,
         successRate: successRate.toFixed(2),
         avgPassingRate: avgPassingRate.toFixed(2),
-        avgTimeToPass: Math.round(avgTimeToPass),
+        avgTime: Math.round(avgTime),
       },
     });
   } catch (err) {

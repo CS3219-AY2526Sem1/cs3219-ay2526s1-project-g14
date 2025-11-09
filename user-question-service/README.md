@@ -69,7 +69,7 @@
 Scoring Factors:
 - Total questions passed
 - Average passing rate
-- Speed (time taken per pass)
+- Speed (time taken per attempt)
 - Recency weight (recent attempts are worth more)
 
 ### Health Check

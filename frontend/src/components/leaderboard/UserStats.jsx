@@ -96,7 +96,7 @@ const UserStats = () => {
               </Grid>
               <Grid item xs="auto" textAlign="center">
                 <Typography sx={{ fontSize: "1rem", fontWeight: 600 }}>
-                  {stats.avgTime ? `${stats.avgTime} ms` : "-"}
+                  {stats.avgTime ? `${Math.round(stats.avgTime/60)} min` : "-"}
                 </Typography>
                 <Typography
                   variant="caption"
