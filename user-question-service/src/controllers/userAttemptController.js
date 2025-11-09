@@ -8,17 +8,18 @@ exports.saveAttempt = async (req, res) => {
   try {
     let {
       sessionId,
-      code = "print(1+1)",
-      language = "python",
-      testCasesPassed = 0,
-      totalTestCases = 0,
+      questionId,
+      code,
+      language,
+      testCasesPassed,
+      totalTestCases,
       timeTaken
     } = req.body;
 
-    console.log("Attempt saved:", req.body);
+    console.log("Attempt saved in saveAttempt:", req.body);
 
     if (!code || code.trim() === "") {
-      code = "print(1+1)";
+      code = "// No code submitted";
     }
     const userId = req.user.id;
 
@@ -46,17 +47,6 @@ exports.saveAttempt = async (req, res) => {
     }
 
     const { participants = [] } = sessionData;
-
-
-    let questionId = 1;
-    if (sessionData.questionId) {
-      if (typeof sessionData.questionId === "object") {
-        questionId = Number(sessionData.questionId.questionId) || 1;
-      } else if (!isNaN(Number(sessionData.questionId))) {
-        questionId = Number(sessionData.questionId);
-      }
-
-    }
 
     if (!participants.length) {
       return res.status(400).json({ success: false, message: "No participants found in session" });
@@ -167,7 +157,7 @@ exports.getUserStats = async (req, res) => {
     if (!attempts.length)
       return res.status(200).json({
         success: true,
-        result: { totalAttempts: 0, passedAttempts: 0, successRate: 0, avgPassingRate: 0, avgTimeToPass: 0 },
+        result: { totalAttempts: 0, passedAttempts: 0, successRate: 0, avgPassingRate: 0, avgTime: 0 },
       });
 
     const total = attempts.length;
@@ -182,11 +172,10 @@ exports.getUserStats = async (req, res) => {
             : 0),
         0
       ) / total;
-    const avgTimeToPass =
+    const avgTime =
       attempts
-        .filter((a) => a.status)
         .reduce((sum, a) => sum + (a.timeTaken || 0), 0) /
-      (passedAttempts || 1);
+      (total || 1);
 
     res.status(200).json({
       success: true,
@@ -195,7 +184,7 @@ exports.getUserStats = async (req, res) => {
         passedAttempts,
         successRate: successRate.toFixed(2),
         avgPassingRate: avgPassingRate.toFixed(2),
-        avgTimeToPass: Math.round(avgTimeToPass),
+        avgTime: Math.round(avgTime),
       },
     });
   } catch (err) {

@@ -28,6 +28,7 @@ export default function CollaborationSession() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [question, setQuestion] = useState(null);
+    const [startTime, setStartTime] = useState(null);
 
     // code editor state
     const [code, setCode] = useState('');
@@ -125,6 +126,7 @@ export default function CollaborationSession() {
             setCode(sessionData.code || '');
             setLanguage(sessionData.language || 'javascript');
             setChatMessages(sessionData.chatHistory || []);
+            setStartTime(sessionData.startTime)
 
             // Find partner
             const parts = sessionData.participants || [];
@@ -227,26 +229,27 @@ export default function CollaborationSession() {
     const handleSaveCode = async (executionResult) => {
         try {
             const output = executionResult?.trim();
-
             const testCases = question?.examples || [];
             const passedCases = testCases.filter(tc => output === tc.output?.trim()).length;
+            const timeTaken = Math.round((Date.now() - new Date(startTime)) / 1000)
             const sid = sessionId.replace(/^room:/, '')
+
             const payload = {
                 sessionId: sid,
-                code,
-                language,
+                questionId: question?.questionId,
+                code: code,
+                language: language,
                 testCasesPassed: passedCases,
                 totalTestCases: testCases.length,
-                timeTaken: 10000,
+                timeTaken: timeTaken,
             };
 
             const { data } = await userAttemptAxios.post(API.USER_ATTEMPTS, payload);
-            console.log("Attempt saved:", data);
+            console.log("Attempt saved in handleSaveCode:", data);
 
             await handleEndSession();
-
         } catch (err) {
-            console.error("Error submitting attempt:", err);
+            console.error("Error submitting attempt:", err); // ERROR WAS LOGGED HERE
             handleEndSession();
         }
     };
@@ -284,7 +287,7 @@ export default function CollaborationSession() {
                 partner={{ username: partnerUser?.username || 'Unknown', id: partnerUser?._id || '' }}
                 startTime={session.startTime}
                 connectedUsers={connectedUsers}
-                handleEndSession={handleEndSession}
+                handleEndSession={handleSaveCode}
             />
 
             <Box sx={{
@@ -332,6 +335,7 @@ export default function CollaborationSession() {
                     }}>
                         <CodeEditorPanel handleSaveCode={handleSaveCode} sessionId={sessionId} code={code} language={language}
                             onCodeChange={(newCode) => {
+                                setCode(newCode);
                                 collaborationService.sendCodeChange(sessionId, newCode, language);
                             }}
                             onLanguageChange={(newLang) => {
