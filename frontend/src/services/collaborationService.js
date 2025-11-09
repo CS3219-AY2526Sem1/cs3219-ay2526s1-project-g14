@@ -1,6 +1,25 @@
-import axios from '../config/axios';
+import axios from 'axios';
 import { io } from 'socket.io-client';
 import { MATCHING_API } from '../constants/api';
+import backendAxios from '../config/axios';
+
+// Create a separate axios instance for collaboration service
+const collaborationAxios = axios.create({
+    baseURL: process.env.REACT_APP_COLLABORATION_URL || 'http://localhost:5051',
+    timeout: 60000,
+    headers: {}
+});
+
+// Add token to collaboration requests
+collaborationAxios.interceptors.request.use((config) => {
+    const token = localStorage.getItem('token') || 
+                  localStorage.getItem('authToken') ||
+                  JSON.parse(localStorage.getItem('user') || '{}')?.token;
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+});
 
 class CollaborationService {
     constructor() {
@@ -11,7 +30,7 @@ class CollaborationService {
     // Initialize WebSocket connection
     initializeSocket() {
         if (!this.socket) {
-            this.socket = io(process.env.REACT_APP_BACKEND_URL || 'http://localhost:5050');
+            this.socket = io(process.env.REACT_APP_COLLABORATION_URL || 'http://localhost:5051');
             
             this.socket.on('connect', () => {
                 console.log('🔌 Connected to collaboration service, socket ID:', this.socket.id);
@@ -30,57 +49,51 @@ class CollaborationService {
         return this.socket;
     }
 
-    async joinQueue({ topic, difficulty }) {
-        try {
-          const { data } = await axios.post(MATCHING_API.START, { topic, difficulty });
-          return data; // { requestId, status, ... }
-        } catch (error) {
-          throw new Error(error.response?.data?.error || 'Failed to start matching');
-        }
-      }
+        async joinQueue({ topic, difficulty }) {
+            const { data } = await backendAxios.post(MATCHING_API.START, { topic, difficulty });
+            return data; // { requestId, status, ... }
+          }
 
-    async leaveQueue(requestId) {
-        try {
-          const { data } = await axios.delete(MATCHING_API.CANCEL(requestId));
-          return data;
-        } catch (error) {
-          throw new Error(error.response?.data?.error || 'Failed to cancel match');
-        }
-      }
-    
-      async getStatus(requestId) {
-        try {
-          const { data } = await axios.get(MATCHING_API.STATUS(requestId));
-          return data; // { status, roomId, partnerUsername, ... }
-        } catch (error) {
-          throw new Error(error.response?.data?.error || 'Failed to get matching status');
-        }
-      }
+        async leaveQueue(requestId) {
+            try {
+              const { data } = await backendAxios.delete(MATCHING_API.CANCEL(requestId));
+              return data;
+            } catch (error) {
+              throw new Error(error.response?.data?.error || 'Failed to cancel match');
+            }
+          }
+
+          async getStatus(requestId) {
+            try {
+              const { data } = await backendAxios.get(MATCHING_API.STATUS(requestId));
+              return data; // { status, roomId, partnerUsername, ... }
+            } catch (error) {
+              throw new Error(error.response?.data?.error || 'Failed to get matching status');
+            }
+          }
 
     // Create collaboration session (microservice API)
     async createSession(payload) {
         try {
-            const response = await axios.post('/collaboration/session', payload);
+            const response = await collaborationAxios.post('/collaboration/session', payload);
             return response.data;
         } catch (error) {
             throw new Error(error.response?.data?.error || 'Failed to create session');
         }
     }
 
-    // Get session details
     async getSession(sessionId) {
         try {
-            const response = await axios.get(`/collaboration/session/${sessionId.replace(/^room:/, '')}`);
+            const response = await collaborationAxios.get(`/collaboration/session/${sessionId.replace(/^room:/, '')}`);
             return response.data;
         } catch (error) {
             throw new Error(error.response?.data?.error || 'Failed to get session');
         }
     }
 
-    // Update session code
     async updateSessionCode(sessionId, code, language) {
         try {
-            const response = await axios.put(`/collaboration/session/${sessionId}/code`, {
+            const response = await collaborationAxios.put(`/collaboration/session/${sessionId}/code`, {
                 code,
                 language
             });
@@ -90,20 +103,54 @@ class CollaborationService {
         }
     }
 
-    // End session
     async endSession(sessionId) {
         try {
-            const response = await axios.put(`/collaboration/session/${sessionId.replace(/^room:/, '')}/end`);
+            const response = await collaborationAxios.put(`/collaboration/session/${sessionId.replace(/^room:/, '')}/end`);
             return response.data;
         } catch (error) {
             throw new Error(error.response?.data?.error || 'Failed to end session');
         }
     }
 
-    // Get user's active session
+    // End session and wait for confirmation before proceeding
+    async endSessionAndWait(sessionId) {
+        return new Promise((resolve, reject) => {
+            if (!this.socket || !this.isConnected) {
+                // Fallback to REST API only if socket not available
+                this.endSession(sessionId)
+                    .then(resolve)
+                    .catch(reject);
+                return;
+            }
+
+            const timeout = setTimeout(() => {
+                this.socket.off('session-ended-confirmed', confirmHandler);
+                reject(new Error('Session end confirmation timeout'));
+            }, 5000);
+
+            const confirmHandler = () => {
+                clearTimeout(timeout);
+                this.socket.off('session-ended-confirmed', confirmHandler);
+                console.log('✅ Session end confirmed by server');
+                resolve();
+            };
+
+            // Listen for confirmation
+            this.socket.once('session-ended-confirmed', confirmHandler);
+
+            // Call REST API to end session (backend will emit events)
+            this.endSession(sessionId)
+                .catch((error) => {
+                    clearTimeout(timeout);
+                    this.socket.off('session-ended-confirmed', confirmHandler);
+                    reject(error);
+                });
+        });
+    }
+
     async getUserSession(userId) {
         try {
-            const response = await axios.get(`/collaboration/user/${userId}/session`);
+            const response = await collaborationAxios.get(`/collaboration/user/${userId}/session`);
             return response.data;
         } catch (error) {
             throw new Error(error.response?.data?.error || 'Failed to get user session');
@@ -142,11 +189,6 @@ class CollaborationService {
         }
     }
 
-    endSessionSocket(sessionId) {
-        if (this.socket && this.isConnected) {
-            this.socket.emit('end-session', { sessionId });
-        }
-    }
 
     // Event listeners
     onMatchFound(callback) {

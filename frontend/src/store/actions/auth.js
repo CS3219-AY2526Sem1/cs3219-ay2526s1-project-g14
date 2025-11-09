@@ -1,4 +1,5 @@
 import { login, register, resendOTP, verifyOTP, firebaseAuth } from "../../controller/authController";
+import { getRoleById } from "../../controller/userController";
 
 export const LOGIN = "LOGIN";
 export const REGISTER = "REGISTER";
@@ -14,7 +15,7 @@ export const handleUserAuthenticated = (data) => async (dispatch) => {
     dispatch({
         type: SET_USER_INFO,
         username: data.user.username,
-        id: data.user.id,
+        id: data.user.id || data.user._id,
         email: data.user.email,
         token: data.token
     });

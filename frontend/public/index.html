@@ -25,6 +25,31 @@
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
     <title>PeerPrep</title>
+    <script>
+      // Suppress ResizeObserver and Monaco worker errors
+      window.addEventListener('error', function(e) {
+        if (e.message === 'ResizeObserver loop completed with undelivered notifications.' ||
+            e.message === 'ResizeObserver loop limit exceeded' ||
+            e.message.includes('Unexpected token') ||
+            e.message.includes('error-stack-parser') ||
+            e.message.includes('stackframe')) {
+          e.stopImmediatePropagation();
+          e.preventDefault();
+          return true;
+        }
+      });
+      
+      // Suppress unhandled promise rejections from Monaco
+      window.addEventListener('unhandledrejection', function(e) {
+        if (e.reason && (
+            e.reason.message?.includes('Unexpected token') ||
+            e.reason.message?.includes('error-stack-parser') ||
+            e.reason.message?.includes('stackframe'))) {
+          e.preventDefault();
+          return true;
+        }
+      });
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

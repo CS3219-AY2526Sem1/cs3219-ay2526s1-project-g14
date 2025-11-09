@@ -1,53 +1,32 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from 'react';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
 import { PAGES } from "../constants/pages"
 import { handleLogout } from "../store/actions/auth"
+import { getRoleById } from "../controller/userController";
 
 const NavigationBar = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const location = useLocation();
     const username = useSelector((state) => state.auth.username);
+    const userId = useSelector((state) => state.auth.id)
+    const [role, setRole] = useState(null)
 
-    // Get user from localStorage (set by UserSelector) or sessionStorage
-    // useEffect(() => {
-    //     const getUserData = () => {
-    //         // First try sessionStorage (UserSelector)
-    //         const sessionUser = sessionStorage.getItem('currentUser');
-    //         if (sessionUser) {
-    //             setCurrentUser(JSON.parse(sessionUser));
-    //             return;
-    //         }
-            
-    //         // Then try localStorage (auth bypass)
-    //         const authState = localStorage.getItem('state');
-    //         if (authState) {
-    //             const userData = JSON.parse(authState);
-    //             setCurrentUser({
-    //                 username: userData.user?.username || 'User'
-    //             });
-    //         }
-    //     };
-
-    //     getUserData();
-        
-    //     // Listen for storage changes (when user switches)
-    //     const handleStorageChange = () => getUserData();
-    //     window.addEventListener('storage', handleStorageChange);
-        
-    //     // Also check periodically for sessionStorage changes
-    //     const interval = setInterval(getUserData, 1000);
-        
-    //     return () => {
-    //         window.removeEventListener('storage', handleStorageChange);
-    //         clearInterval(interval);
-    //     };
-    // }, []);
+    useEffect(() => {
+        if (userId) {
+            async function fetchRole() {
+                const r = await getRoleById(userId);
+                    setRole(r);
+                }
+            fetchRole();
+        }
+    }, [userId]);
 
     const onLogout = () => {
         dispatch(handleLogout());
@@ -60,7 +39,7 @@ const NavigationBar = () => {
     if (location.pathname === "/login" || location.pathname === "/register" || isCollaborationPage) {
         return null;
     }
-    
+
     return (
         <Box
             component="nav"
@@ -104,15 +83,49 @@ const NavigationBar = () => {
                 >
                     <Typography sx={{ fontSize: "1rem", fontWeight: "semibold" }}>Question List</Typography>
                 </a>
+                {role === "admin" && (
+                    <a
+                    href="/questions/add-question"
+                    style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        textDecoration: "none",
+                        color: "black",
+                    }}
+                    >
+                    <Typography sx={{ fontSize: "1rem", fontWeight: "semibold" }}>Add Question</Typography>
+                    </a>
+                )}
+                <a
+                    href="/leaderboard"
+                    style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        textDecoration: "none",
+                        color: "black",
+                    }}
+                >
+                    <Typography sx={{ fontSize: "1rem", fontWeight: "semibold" }}>Leaderboard</Typography>
+                </a>
             </Box>
 
             <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <AccountCircleIcon sx={{ fontSize: 32, color: "black" }} />
-                    <Typography sx={{ color: "black", fontWeight: "bold" }}>
-                        {username || 'User'}
-                    </Typography>
+                    <a href="/profile">
+                        <Typography sx={{ color: "black", fontWeight: "bold" }}>
+                            {username || 'User'}
+                        </Typography>
+                    </a>
                 </Box>
+                {role === "admin" && (
+                    <Chip 
+                        label="Admin"
+                        sx={{ bgcolor: "#EDF2FF", color: "#000", border: "0.5px solid #000", fontWeight: "semibold"}}
+                    />
+                )}
                 <Button
                     variant="outlined"
                     onClick={onLogout}
@@ -124,7 +137,7 @@ const NavigationBar = () => {
                         "&:hover": { backgroundColor: "#f1f1f1" },
                     }}
                 >
-                <Typography sx={{ color: "black", fontWeight: "semibold" }}>Logout</Typography>
+                    <Typography sx={{ color: "black", fontWeight: "semibold" }}>Logout</Typography>
                 </Button>
             </Box>
         </Box>

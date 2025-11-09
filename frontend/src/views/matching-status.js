@@ -40,30 +40,34 @@ export default function MatchingStatus() {
     "Checking available matches...",
   ];
 
-  const getPartnerUsername = async (sId, myId, myUsername) => {
+  const getPartnerUsername = async (sId, myId, myUsername, retries = 3) => {
     try {
+      // Add small delay to allow DB write to complete
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
       const res = await collaborationService.getSession(sId);
       const sess = res.payload;
       if (!sess?.participants?.length) return "";
 
-      const parts = sess.participants.map(p => p?.userId).filter(Boolean);
+      // Keep full participant objects, not just userId
+      const parts = sess.participants.filter(Boolean);
 
-      // find me first
-      const meById =
-        myId && parts.find(u => String(u._id) === String(myId));
-      const meByName =
-        !meById && myUsername
-          ? parts.find(
-              u => (u.username || "").toLowerCase() === myUsername.toLowerCase()
-            )
-          : null;
-      const myActualId = String(meById?._id || meByName?._id || "");
+      // find first by userId
+      const me = myId && parts.find(p => String(p.userId) === String(myId));
+      const myActualId = me ? String(me.userId) : "";
 
-      // find the other person
-      const partner = parts.find(u => String(u._id) !== myActualId);
+      const partner = parts.find(p => String(p.userId) !== myActualId);
       return partner?.username || "";
     } catch (err) {
       console.error("Error retrieving partner username", err);
+      
+      // Retry if session not found and retries remaining
+      if (err.message?.includes('Session not found') && retries > 0) {
+        console.log(`Retrying getPartnerUsername... (${retries} attempts left)`);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return getPartnerUsername(sId, myId, myUsername, retries - 1);
+      }
+      
       return "";
     }
   };
@@ -122,7 +126,7 @@ export default function MatchingStatus() {
           setStatus("MATCHED");
           setIsMatched(true);
           const uname = await getPartnerUsername(data.roomId, userId, username);
-          if (uname) setPartnerUsername(uname);
+          setPartnerUsername(uname);  // Always set, even if empty for consistency
           if (!countdownStarted) {
             setCountdown(5);
             setCountdownStarted(true);
@@ -149,15 +153,26 @@ export default function MatchingStatus() {
       const isForCurrentUser = Array.isArray(data.participants)
       && (userId
            ? data.participants.map(String).includes(String(userId))
-           : true); // if id missing, still try (we’ll verify via session fetch)
+           : true); // if id missing, still try 
   
     if (isForCurrentUser && status === "SEARCHING" && !isMatched) {
       setStatus("MATCHED");
       setRoomId(data.sessionId);
       setTopic(data.topic);
       setDifficulty(data.difficulty);
-      const uname = await getPartnerUsername(data.sessionId, userId, username);
-      if (uname) setPartnerUsername(uname);
+      
+      // Get partner username from WebSocket event data (faster, no API call needed)
+      if (data.usernames && Array.isArray(data.usernames) && data.participants) {
+        const myIndex = data.participants.findIndex(p => String(p) === String(userId));
+        const partnerIndex = myIndex === 0 ? 1 : 0;
+        const partnerName = data.usernames[partnerIndex] || "";
+        setPartnerUsername(partnerName);
+      } else {
+        // Fallback: fetch from API with retry logic
+        const uname = await getPartnerUsername(data.sessionId, userId, username);
+        setPartnerUsername(uname);  
+      }
+      
       setIsMatched(true);
       if (!countdownStarted) { setCountdown(5); setCountdownStarted(true); }
     }

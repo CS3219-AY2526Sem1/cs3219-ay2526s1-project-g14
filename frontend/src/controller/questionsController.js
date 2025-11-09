@@ -1,33 +1,8 @@
-import { API } from '../constants/api';
-import axiosInstance from '../config/axios';
+import questionService from '../services/questionService';
 
-export const fetchQuestions = async(topic="", difficulty="") => {
-    const params = {}
-    if (topic) params.topic = topic;
-    if (difficulty) params.difficulty = difficulty;
-    const { data } = await axiosInstance.get(API.QUESTIONS, {params})
-    return data.payload;
-}
-
-export const getQuestionById = async (id) => {
-    try {
-        const { data } = await axiosInstance.get(`${API.QUESTIONS}/${id}`);
-        return data.payload;
-    } catch (error) {
-        console.error("Error fetching question by ID:", error);
-        throw error;
-    }
-};
-
-export const fetchTopics = async() => {
-    const { data } = await axiosInstance.get(API.TOPICS);
-    return data.payload
-}
-
-export const fetchOneQuestion = async(topic="", difficulty="") => {
-    const params = {}
-    if (topic) params.topic = topic;
-    if (difficulty) params.difficulty = difficulty;
-    const { data } = await axiosInstance.get(API.RANDOMQUESTION, {params})
-    return data.payload;
-}
+export const fetchQuestions = (topic, difficulty) => questionService.getQuestions(topic, difficulty);
+export const getQuestionById = (id) => questionService.getQuestionById(id);
+export const fetchTopics = () => questionService.getTopics();
+export const fetchOneQuestion = (topic, difficulty) => questionService.getRandomQuestion(topic, difficulty);
+export const fetchLastQuestionId = () => questionService.getLastQuestionId();
+export const addQuestion = (data) => questionService.addQuestion(data);
