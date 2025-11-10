@@ -1,3 +1,12 @@
+/**
+ * AI Usage
+ * This file contains code enhanced with ChatGPT assistance.
+ * Specific improvements: added input validation for questionId, improved error handling for missing or invalid IDs, 
+ * and clarified response structure for consistency with internal service calls.
+ * See /ai-usage-log.md for detailed attribution and modifications.
+ * Date: 2025-10-21
+ */
+
 const mongoose = require("mongoose");
 
 const Question = require("../model/questionModel.js");

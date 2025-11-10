@@ -4,17 +4,9 @@ import {
     Typography,
     Paper,
     Collapse,
-    Divider,
     Button,
-    IconButton
 } from "@mui/material";
-import {
-    ExpandMore as ExpandMoreIcon,
-    Visibility as VisibilityIcon,
-    VisibilityOff as VisibilityOffIcon,
-    Code as CodeIcon,
-    PlayArrow as PlayArrowIcon
-} from '@mui/icons-material';
+import { PlayArrow as PlayArrowIcon } from '@mui/icons-material';
 
     export default function ExamplesSection({ examples }) {
     const [expanded, setExpanded] = useState(() => examples.map(() => false));
@@ -115,50 +107,6 @@ import {
             </Box>
             );
         })}
-
-        {/* Hints Section (Optional) */}
-        {/* <Paper sx={{ mb: 2 }}>
-            <Box
-                sx={{
-                    p: 2,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    '&:hover': { bgcolor: '#f5f5f5' }
-                }}
-                onClick={() => setShowHints(!showHints)}
-            >
-            <Box display="flex" alignItems="center" gap={1}>
-                <CodeIcon sx={{ color: '#0091f3' }} />
-                <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#333' }}>
-                    Approach Hints
-                </Typography>
-            </Box>
-                <IconButton size="small">
-                    {showHints ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                </IconButton>
-            </Box>
-            
-            <Collapse in={showHints}>
-                <Box sx={{ p: 2, pt: 0, borderTop: '1px solid #e0e0e0' }}>
-                    <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-                        Think about these approaches:
-                    </Typography>
-                    <Box component="ul" sx={{ pl: 2, m: 0 }}>
-                        <Typography component="li" variant="body2" sx={{ mb: 0.5 }}>
-                            Consider the time and space complexity requirements
-                        </Typography>
-                        <Typography component="li" variant="body2" sx={{ mb: 0.5 }}>
-                            Look for patterns in the examples
-                        </Typography>
-                        <Typography component="li" variant="body2" sx={{ mb: 0.5 }}>
-                            Think about edge cases and constraints
-                        </Typography>
-                    </Box>
-                </Box>
-            </Collapse>
-        </Paper> */}
         </Box>
     );
 }

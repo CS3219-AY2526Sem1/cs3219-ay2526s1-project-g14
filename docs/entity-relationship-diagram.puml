@@ -21,6 +21,7 @@ entity "Question" as question {
     *topic: [string]
     *examples: [ { input: string, output: string } ]
     *questionId: number
+    image: string
 }
 
 entity "Session" as session {

@@ -146,12 +146,104 @@ Implemented connection state tracking with in-memory Map, added broadcasting of 
 **Author Notes:**
 Needed to show which users were actively connected vs just in the session. Used Copilot to add connection tracking with Map and broadcasting logic. Modified state structure to include user details and adjusted validation. Tested with users joining/leaving to verify state updates correctly.
 
+---
+
+## Entry 7: 
+
+**Date/Time:** 2025-10-08
+
+**File:** (`questions` collection in MongoDB database)
+
+**Tool:** ChatGPT
+
+**Prompt/Command:**
+"Give me example coding questions with different topics and difficulties. Include examples with inputs and outputs.""
+
+**Output Summary:**
+Generated multiple example coding questions formatted in JSON for MongoDB insertion. The samples were created to populate the database for testing admin role functionalities such as adding and retrieving questions.
+
+**Action Taken:**
+- [ ] Accepted as-is
+- [X] Modified
+- [ ] Rejected
+
+**Author Notes:**
+Used AI-generated question templates to seed test data in MongoDB and validate the admin interface workflow for question creation and management. 
+
+---
+
+## Entry 8: Question Controller (Backend)
+
+**Date/Time:** 2025-10-21
+**File:** `question-service/src/controllers/questionController.js`  
+**Tool:** ChatGPT
+
+**Prompt/Command:**  
+"Help me debug qId, as fetching a single question by its questionId field (for internal service call)"  
+
+**Output Summary:**  
+Generated controller function to fetch a single question by `questionId`.  
+Added type conversion and validation for numeric IDs, handled missing or invalid IDs with clear status codes,  
+and improved error message consistency for debugging.  
+
+**Action Taken:**  
+- [ ] Accepted as-is  
+- [X] Modified  
+- [ ] Rejected  
+
+**Author Notes:**  
+Used ChatGPT to debug creation of a consistent controller with robust validation and standardised response format for internal service use. Verified that it correctly returns structured responses.
+
+---
+
+## Entry 9: User Attempt Controller (Backend)
+
+**Date/Time:** 2025-11-07
+**File:** `user-question-service/src/controllers/userAttemptController.js`
+**Tool:** ChatGPT 
+
+**Prompt/Command:**  
+"Help to debug user attempts, to ensure successful saving attempts for all session participants"  
+
+**Output Summary:**  
+Enhanced `saveAttempt` function for improved debugging and data integrity. Added request validation, detailed console logs for debugging session and question service calls, and consistent JSON responses.  
+
+**Action Taken:**  
+- [ ] Accepted as-is  
+- [X] Modified  
+- [ ] Rejected  
+
+**Author Notes:**  
+Used ChatGPT during debugging to streamline error handling, validation, and service communication logic.  
+Kept extensive console outputs to trace request flow and ensurerobust creation of user attempt records.
+
+---
+
+## Entry 10: Collaboration Session Page (Frontend)
+
+**Date/Time:** 2025-11-08  
+**File:** `frontend/src/pages/collaboration-session.js  
+**Tool:** ChatGPT 
+
+**Prompt/Command:**  
+"Debug handleSaveCode logic as there is an error saving the attempt results"  
+
+**Output Summary:**  
+Enhanced the `handleSaveCode` function for better debugging and result tracking. Added structured payload for API submission to `userAttemptAxios`. Improved logging and defensive error handling to ensure the session always ends gracefully even on API errors.  
+
+**Action Taken:**  
+- [ ] Accepted as-is  
+- [X] Modified  
+- [ ] Rejected  
+
+**Author Notes:**  
+Used ChatGPT while debugging attempt-saving workflow to ensure accurate tracking of data. The generated logic was refined to ensure smooth integration with the backend `userAttemptController` and robust error handling when submitting attempts or ending a collaboration session.
 
 ---
 
 ## Summary Statistics
 
-**Total Files Flagged:** 6
-- Frontend: 5 files
-- Backend: 1 files
+**Total Files Flagged:** 9
+- Frontend: 6 files
+- Backend: 3 files
 

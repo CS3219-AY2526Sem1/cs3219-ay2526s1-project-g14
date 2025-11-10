@@ -1,3 +1,12 @@
+/**
+ * AI Usage
+ * This file contains code enhanced with ChatGPT assistance.
+ * Specific improvements: debugging and refining user attempt saving logic,
+ * detailed logging for debugging collaboration and question service integrations.
+ * See /ai-usage-log.md for detailed attribution and modifications.
+ * Date: 2025-11-07
+ */
+
 const UserAttempt = require("../models/userAttemptModel.js");
 const axios = require("axios");
 
