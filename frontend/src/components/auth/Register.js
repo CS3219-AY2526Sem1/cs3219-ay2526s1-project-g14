@@ -31,7 +31,7 @@ const Register = ({ setError }) => {
                 if (!result.success) setError(result.error);
             })
             .catch((err) => {
-                console.error(err);
+                console.log(err);
                 setError("Something went wrong");
             });
     };

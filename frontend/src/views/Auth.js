@@ -1,5 +1,15 @@
-import React, { useState } from "react";
-import { Typography, Box } from "@mui/material";
+import React, { useState, useEffect } from "react";
+import {
+    Typography,
+    Box,
+    IconButton,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    Snackbar,
+    Alert,
+} from "@mui/material";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { motion, AnimatePresence } from "framer-motion";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -21,9 +31,24 @@ const AuthCard = () => {
     const [otpError, setOtpError] = useState("");
     const [otpInfo, setOtpInfo] = useState("");
 
+    const [openInfo, setOpenInfo] = useState(false);
+    const [showHint, setShowHint] = useState(false);
+
+    useEffect(() => {
+        if (error) {
+            setShowHint(true);
+
+            const timeout = setTimeout(() => {
+                setShowHint(false);
+            }, 10000);
+
+            return () => clearTimeout(timeout);
+        }
+    }, [error]);
+
+
     return (
         <Box className={styles.pageWrapper}>
-
             {otpEmail && (
                 <OTPModal
                     email={otpEmail}
@@ -34,24 +59,26 @@ const AuthCard = () => {
                     setOtpInfo={setOtpInfo}
                     onVerified={async (otp) => {
                         const result = await dispatch(handleVerifyOTP(otpEmail, otp));
-                        if (!result.success) {
-                            setOtpError(result.error);
-                        } else {
-                            navigate("/");
-                        }
+                        if (!result.success) setOtpError(result.error);
+                        else navigate("/");
                     }}
                     onResend={async (email) => {
                         const result = await dispatch(handleResendOTP(email));
-                        if (!result.success) {
-                            setOtpError(result.error);
-                        } else {
-                            setOtpInfo("OTP sent to your email");
-                        }
+                        if (!result.success) setOtpError(result.error);
+                        else setOtpInfo("OTP sent to your email");
                     }}
                 />
             )}
 
             <Box className={styles.container}>
+                <IconButton
+                    size="small"
+                    sx={{ position: "absolute", top: 24, right: 24, color: "#555" }}
+                    onClick={() => setOpenInfo(true)}
+                >
+                    <InfoOutlinedIcon />
+                </IconButton>
+
                 <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
                     PeerPrep
                 </Typography>
@@ -74,7 +101,11 @@ const AuthCard = () => {
                                         transition={{ type: "spring", stiffness: 500, damping: 30 }}
                                     />
                                 )}
-                                <span className={activeTab === tab ? styles.activeText : styles.inactiveText}>
+                                <span
+                                    className={
+                                        activeTab === tab ? styles.activeText : styles.inactiveText
+                                    }
+                                >
                                     {tab}
                                 </span>
                             </div>
@@ -112,9 +143,35 @@ const AuthCard = () => {
                             </motion.div>
                         )}
                     </AnimatePresence>
-
                 </Box>
             </Box>
+
+
+            <Dialog open={openInfo} onClose={() => setOpenInfo(false)}>
+                <DialogTitle>Connection Notice</DialogTitle>
+                <DialogContent>
+                    <Typography variant="body2" sx={{ color: "#333" }}>
+                        If you’re facing issues logging in or registering, please try using a
+                        mobile hotspot. NUS Wi-Fi blocks some network ports that our backend
+                        services rely on. We’re investigating and will improve this in our
+                        next release.
+                    </Typography>
+                </DialogContent>
+            </Dialog>
+
+            <Snackbar
+                open={showHint}
+                onClose={() => setShowHint(false)}
+                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+            >
+                <Alert
+                    onClick={() => setOpenInfo(true)}
+                    severity="info"
+                    sx={{ cursor: "pointer" }}
+                >
+                    Facing issues logging in or signing up? Click here <b>or tap the info icon</b>
+                </Alert>
+            </Snackbar>
         </Box>
     );
 };
