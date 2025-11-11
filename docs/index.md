@@ -1,4 +1,4 @@
-# 🧩 PeerPrep API & Services Documentation
+# PeerPrep API & Services Documentation
 
 > CS3219 Group 14 — PeerPrep  
 > Technical Interview Preparation Platform  
@@ -22,7 +22,7 @@ Each microservice runs independently in Docker, exposing RESTful APIs that commu
 
 ---
 
-## ⚙️ MS1 – User Service
+## MS1 – User Service
 
 Handles **user authentication**, **profile management**, and **email verification** using OTP.
 
