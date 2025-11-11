@@ -1,535 +1,299 @@
 # Collaboration Service
 
-A real-time collaboration microservice for PeerPrep that enables two users to work together on coding problems with live code editing, chat, and cursor tracking.
+**AI Usage**
+This README contains documentation enhanced with AI assistance (GitHub Copilot).
+Specific improvements: WebSocket event tables formatting.
+See `/ai-usage-log.md` for detailed attribution.
+
+The **Collaboration Service** is a Node.js + Express microservice that enables real-time paired programming sessions with synchronized code editing, live chat, and session management.
+- It provides both RESTful APIs for session lifecycle management and WebSocket (Socket.IO) communication for real-time collaboration features.
+- This service uses MongoDB (via Mongoose) for persistent storage and maintains in-memory state for active WebSocket connections.
 
 ## Features
+- Real-time code synchronization between paired users
+- Live chat messaging within sessions
+- User presence tracking (join/leave notifications)
+- Session persistence (code, chat history, timestamps)
+- Integration with Question Service and User-Question Service
+- JWT authentication for secure access
+- Docker-ready for deployment
 
-- **Real-time Code Synchronization**: Live code editing with instant updates across both users
-- **WebSocket Communication**: Instant updates for code changes, chat messages, and cursor positions
-- **Session Management**: Create, join, update, and end collaboration sessions
-- **Persistent Storage**: MongoDB-backed session data with chat history
-- **Service Integration**: Seamless integration with user and question services
-- **Session State Management**: Prevents users from starting new matches while in active sessions
-
-## Architecture
-
-This is a standalone microservice that:
-- Manages collaboration sessions independently from the main backend
-- Integrates with the main backend for user authentication (JWT)
-- Fetches question data from the question service
-- Communicates via REST API and WebSocket events
-- Stores session data in MongoDB
-
-## Prerequisites
-
-- Node.js (v14 or higher)
-- MongoDB (local or cloud instance)
-- Environment variables configured
-
-## Installation
-
-```bash
-# Install dependencies
-npm install
+## Project Structure
 ```
+collaboration-service/
+├── src/
+│   ├── app.js                          # Express + Socket.IO setup
+│   ├── index.js                        # Server entry point
+│   ├── config/
+│   │   └── database.js                 # MongoDB connection
+│   ├── controllers/
+│   │   └── collaborationController.js  # REST API handlers
+│   ├── middleware/
+│   │   └── auth.js                     # JWT authentication middleware
+│   ├── models/
+│   │   └── sessionModel.js             # Session schema definition
+│   ├── routes/
+│   │   ├── collaboration.js            # REST API routes
+│   │   └── health.js                   # Health check endpoint
+│   └── services/
+│       └── socketService.js            # WebSocket event handlers
+├── Dockerfile                          # Docker build configuration
+├── docker-compose.yml                  # Docker compose for local dev
+├── package.json                        # Dependencies
+├── nodemon.json                        # Dev reload configuration
+└── README.md                           # This file
+```
+
+## Architecture: REST + WebSocket Hybrid
+
+This service uses a dual-protocol architecture:
+
+**REST API** handles:
+- Session creation/retrieval (CRUD operations)
+- Operations requiring guaranteed delivery and confirmation
+- Integration with other microservices (Matching Service, Question Service, User-Question Service)
+- Operations that need HTTP status codes for error handling
+
+**WebSocket** handles:
+- Real-time code synchronization (low latency required)
+- Chat messages (instant delivery to all participants)
+- User presence updates (join/leave notifications)
+- Cursor position sharing (high-frequency updates)
+- Session end notifications (broadcast to all users simultaneously)
+
+ REST provides reliability for critical operations (creating sessions, saving attempts), while WebSocket enables instant updates for collaborative editing. This follows the same pattern as Google Docs (REST for document management, WebSocket for real-time editing) and Slack (REST for messages/channels, WebSocket for live updates).
+
+**Example:** Session ending uses REST (`PUT /session/:id/end`) to update the database and save attempts, then WebSocket events (`session-ended`, `session-ended-confirmed`) notify both users simultaneously.
+
+## State Management
+
+**Persistent State (MongoDB)**
+```javascript
+{
+  sessionId: UUID,
+  participants: [{ userId, username, joinedAt }],
+  questionId: String,
+  code: String,
+  language: String,
+  chatHistory: [{ userId, username, message, timestamp }],
+  status: 'active' | 'in_progress' | 'completed',
+  startTime: Date,
+  endTime: Date
+}
+```
+
+**In-Memory State (Socket Service)**
+```javascript
+// Map of sessionId -> Set of connected socket IDs
+this.sessions = Map<sessionId, Set<socketId>>;
+
+// Per-socket metadata
+socket.sessionId = '550e8400-...';
+socket.userId = 'user123';
+socket.username = 'Alice';
+```
+
+MongoDB provides persistent storage that survives restarts, while in-memory state enables fast lookups for real-time connection tracking.
 
 ## Environment Variables
+Create a `.env` file in the `collaboration-service/` directory:
 
-Create a `.env` file in the root directory:
-
-```env
+```bash
+# server config
 PORT=5051
-MONGODB_CONNECTION=mongodb+srv://username:password@cluster.mongodb.net/database?retryWrites=true&w=majority
-JWT_SECRET=your_jwt_secret_here
+NODE_ENV=development
+
+# MongoDB config
+MONGODB_URI=mongodb://localhost:27017/collaboration-db
+# OR for Docker:
+# MONGODB_URI=mongodb://mongo:27017/collaboration-db
+
+# JWT config
+JWT_SECRET=your-jwt-secret-key-here
+
+# Service URLs
+FRONTEND_URL=http://localhost:3000
 USER_SERVICE_URL=http://localhost:5050
 QUESTION_SERVICE_URL=http://localhost:5052
-FRONTEND_URL=http://localhost:3000
+REACT_APP_USERQUESTION_URL=http://localhost:5054
+
+# CORS config
+CORS_ORIGIN=http://localhost:3000
 ```
 
-### Environment Variables Explained
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `PORT` | Port the service runs on | `5051` |
-| `MONGODB_CONNECTION` | MongoDB connection string | Required |
-| `JWT_SECRET` | Secret for JWT token verification | Required |
-| `USER_SERVICE_URL` | URL of the user service | `http://localhost:5050` |
-| `QUESTION_SERVICE_URL` | URL of the question service | `http://localhost:5052` |
-| `FRONTEND_URL` | Frontend URL for CORS | `http://localhost:3000` |
-
-## 🏃 Running the Service
-
-### Development mode (with auto-reload):
+For Docker deployment, use service names instead of localhost:
 ```bash
+MONGODB_URI=mongodb://mongo:27017/collaboration-db
+USER_SERVICE_URL=http://user-service:5050
+QUESTION_SERVICE_URL=http://question-service:5052
+```
+
+## API Endpoints
+
+**Base URL:** `http://localhost:5051`
+
+### REST API
+
+| Method | Endpoint                                  | Description                                    | Auth Required |
+| ------ | ----------------------------------------- | ---------------------------------------------- | ------------- |
+| `GET`  | `/health`                                 | Health check                                   | No            |
+| `POST` | `/collaboration/session`                  | Create a new collaboration session             | No            |
+| `GET`  | `/collaboration/session/:sessionId`       | Get session details (includes question data)   | Yes (JWT)     |
+| `PUT`  | `/collaboration/session/:sessionId/end`   | End session and save attempt                   | Yes (JWT)     |
+| `GET`  | `/collaboration/user/:userId/session`     | Check if user has an active session            | No            |
+
+### WebSocket Events (Socket.IO)
+
+**Client → Server**
+
+| Event              | Payload                                          | Description                    |
+| ------------------ | ------------------------------------------------ | ------------------------------ |
+| `join-session`     | `{ sessionId, userId, username }`                | Join a collaboration session   |
+| `code-change`      | `{ sessionId, code, language }`                  | Send code changes              |
+| `chat-message`     | `{ sessionId, message }`                         | Send chat message              |
+
+**Server → Client**
+
+| Event                      | Payload                                          | Description                                |
+| -------------------------- | ------------------------------------------------ | ------------------------------------------ |
+| `sessionCreated`           | `{ sessionId, participants, usernames, ... }`    | New session created (from matching)        |
+| `session-state`            | `{ session, connectedUsers }`                    | Current session state and connected users  |
+| `user-joined`              | `{ userId, username, message }`                  | User joined the session                    |
+| `user-left`                | `{ userId, username, message }`                  | User left the session                      |
+| `code-updated`             | `{ code, language, updatedBy }`                  | Code changes from other user               |
+| `chat-message`             | `{ userId, username, message, timestamp }`       | Chat message                               |
+| `session-ended`            | `{ endedBy, message }`                           | Session has ended (UI notification)        |
+| `session-ended-confirmed`  | `{ sessionId, timestamp }`                       | Safe to navigate (sync signal)             |
+| `error`                    | `{ message }`                                    | Error notification                         |
+
+**Built-in Socket.IO Events**
+
+| Event        | Direction         | Description                                    |
+| ------------ | ----------------- | ---------------------------------------------- |
+| `connect`    | Server → Client   | Socket connected successfully                  |
+| `disconnect` | Both directions   | Socket disconnected (user closes tab/network)  |
+
+**Note on `session-ended-confirmed`:** This event prevents race conditions by ensuring all cleanup operations (database updates, saving attempts) are complete before users navigate away. Frontend should wait for this confirmation before redirecting.
+
+## Session Lifecycle
+
+**1. Session Creation**
+- Matching Service calls `POST /collaboration/session` with matched users
+- Controller fetches question from Question Service
+- Creates session in MongoDB with empty code
+- Emits `sessionCreated` WebSocket event to notify both users
+- Returns session data to Matching Service
+
+**2. Joining Session**
+- Users navigate to `/collaboration/:sessionId`
+- Frontend calls `GET /collaboration/session/:sessionId` to load session details
+- Establishes WebSocket connection via `socket.emit('join-session')`
+- Server validates user is a participant, adds to room, broadcasts `user-joined` event
+
+**3. Real-time Collaboration**
+- Code changes: `socket.emit('code-change')` → persisted to MongoDB → broadcasted as `code-updated` to partner (debounced 500ms)
+- Chat messages: `socket.emit('chat-message')` → persisted to MongoDB → broadcasted to all users
+
+**4. Ending Session**
+- User calls `PUT /collaboration/session/:sessionId/end`
+- Server updates status to 'completed', saves attempt to User-Question Service
+- Emits `session-ended` and `session-ended-confirmed` WebSocket events
+- Both users receive notifications and navigate to home page
+
+## Example Requests
+
+### Create Session (from Matching Service)
+```bash
+curl -X POST http://localhost:5051/collaboration/session \
+  -H "Content-Type: application/json" \
+  -d '{
+  "users": [
+      { "userId": "user123", "username": "Alice" },
+      { "userId": "user456", "username": "Bob" }
+  ],
+  "difficulty": "Medium",
+    "topic": "Algorithms",
+    "questionData": { "questionId": "q789" }
+  }'
+```
+
+### Get Session Details
+```bash
+curl -X GET http://localhost:5051/collaboration/session/550e8400-... \
+  -H "Authorization: Bearer <JWT_TOKEN>"
+```
+
+### End Session
+```bash
+curl -X PUT http://localhost:5051/collaboration/session/550e8400-.../end \
+  -H "Authorization: Bearer <JWT_TOKEN>"
+```
+
+### WebSocket Connection (Frontend)
+```javascript
+import io from 'socket.io-client';
+
+const socket = io('http://localhost:5051');
+
+// Join session
+socket.emit('join-session', {
+  sessionId: '550e8400-...',
+    userId: 'user123',
+    username: 'Alice'
+});
+
+// Send code changes
+socket.emit('code-change', {
+  sessionId: '550e8400-...',
+  code: 'function twoSum(nums, target) { ... }',
+    language: 'javascript'
+});
+
+// Listen for updates
+socket.on('code-updated', (data) => {
+  console.log('Code updated by:', data.updatedBy);
+  setCode(data.code);
+});
+
+socket.on('session-state', (data) => {
+  console.log('Connected users:', data.connectedUsers);
+});
+```
+
+## Service Integration
+
+**Incoming Requests:**
+- **Matching Service (MS3)** → `POST /collaboration/session` - Creates sessions when users are matched
+- **Frontend** → REST API for session CRUD operations
+- **Frontend** → WebSocket for real-time collaboration events
+
+**Outgoing Requests:**
+- **Question Service (MS2)** → `GET /questions/internal/:id` - Fetches question details
+- **User Service (MS1)** → `GET /users/:id` - Validates JWT tokens and fetches user data
+- **User-Question Service (MS5)** → `POST /attempt` - Saves user attempts when sessions end
+
+## Running the Service
+
+### Development Mode
+```bash
+cd collaboration-service
+npm install
 npm run dev
 ```
 
-### Production mode:
+### Production Mode
 ```bash
 npm start
 ```
 
-The service will be available at `http://localhost:5051`
-
-##  API Documentation
-
-### REST Endpoints
-
-#### 1. Create Collaboration Session
-Creates a new collaboration session for two matched users.
-
-```http
-POST /collaboration/session
-Content-Type: application/json
-
-{
-  "users": [
-    { "userId": "user_123" },
-    { "userId": "user_456" }
-  ],
-  "difficulty": "Medium",
-  "topic": "Arrays",
-  "questionData": {
-    "questionId": "q_001"  // Optional: specific question
-  }
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "payload": {
-    "sessionId": "session_1234567890",
-    "session": { /* session object */ },
-    "question": { /* question object */ }
-  }
-}
-```
-
-#### 2. Get Session Details
-Retrieves full session information including question and participants.
-
-```http
-GET /collaboration/session/{sessionId}
-Authorization: Bearer {jwt-token}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "payload": {
-    "sessionId": "session_123",
-    "participants": [
-      { "userId": { "_id": "user_123", "username": "Alice" }, "joinedAt": "..." },
-      { "userId": { "_id": "user_456", "username": "Bob" }, "joinedAt": "..." }
-    ],
-    "questionId": { "questionId": "q_001", "title": "Two Sum", /* ... */ },
-    "status": "in_progress",
-    "code": "function solution() { /* ... */ }",
-    "language": "javascript",
-    "chatHistory": [ /* ... */ ],
-    "startTime": "...",
-    "endTime": null
-  }
-}
-```
-
-#### 3. Update Session Code
-Updates the session's code and language (REST fallback for WebSocket).
-
-```http
-PUT /collaboration/session/{sessionId}/code
-Content-Type: application/json
-Authorization: Bearer {jwt-token}
-
-{
-  "code": "function twoSum(nums, target) { return []; }",
-  "language": "javascript"
-}
-```
-
-#### 4. End Session
-Marks a session as completed and notifies all participants via WebSocket.
-
-```http
-PUT /collaboration/session/{sessionId}/end
-Authorization: Bearer {jwt-token}
-```
-
-**Note:** This endpoint broadcasts a `session-ended` event to all users in the session.
-
-#### 5. Get User's Active Session
-Checks if a user has an active or in-progress session.
-
-```http
-GET /collaboration/user/{userId}/session
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "payload": {
-    "sessionId": "session_123",
-    "status": "active",
-    /* ... */
-  }
-}
-```
-
-Returns `null` payload if no active session exists.
-
-#### 6. Health Check
-```http
-GET /health
-```
-
-Returns:
-```json
-{
-  "status": "OK",
-  "service": "collaboration-service"
-}
-```
-
-### WebSocket Events
-
-Connect to the WebSocket server at the same host/port as the REST API.
-
-#### Client → Server Events
-
-**Join Session**
-```javascript
-socket.emit('join-session', {
-    sessionId: 'session_123',
-    userId: 'user123',
-    username: 'Alice'
-});
-```
-
-**Send Code Changes**
-```javascript
-socket.emit('code-change', {
-    sessionId: 'session_123',
-    code: 'function solution() { return result; }',
-    language: 'javascript'
-});
-```
-
-**Send Chat Message**
-```javascript
-socket.emit('chat-message', {
-    sessionId: 'session_123',
-    message: 'What do you think about this approach?'
-});
-```
-
-**Send Cursor Position**
-```javascript
-socket.emit('cursor-position', {
-    sessionId: 'session_123',
-    position: { line: 5, column: 10 }
-});
-```
-
-**End Session**
-```javascript
-socket.emit('end-session', {
-    sessionId: 'session_123'
-});
-```
-
-#### Server → Client Events
-
-**User Joined**
-```javascript
-socket.on('user-joined', (data) => {
-    // { userId: 'user456', username: 'Bob', message: 'Bob joined the session' }
-});
-```
-
-**Session State**
-```javascript
-socket.on('session-state', (data) => {
-    // { session: {...}, connectedUsers: [{id: 'user123', username: 'Alice'}, ...] }
-});
-```
-
-**Code Updated**
-```javascript
-socket.on('code-updated', (data) => {
-    // { code: '...', language: 'javascript', updatedBy: 'Bob' }
-});
-```
-
-**Chat Message**
-```javascript
-socket.on('chat-message', (data) => {
-    // { userId: 'user456', username: 'Bob', message: '...', timestamp: '...' }
-});
-```
-
-**Cursor Updated**
-```javascript
-socket.on('cursor-updated', (data) => {
-    // { userId: 'user456', username: 'Bob', position: { line: 5, column: 10 } }
-});
-```
-
-**User Left**
-```javascript
-socket.on('user-left', (data) => {
-    // { userId: 'user456', username: 'Bob', message: 'Bob disconnected (can rejoin)' }
-});
-```
-
-**Session Ended**
-```javascript
-socket.on('session-ended', (data) => {
-    // { endedBy: 'Bob', message: 'Session has been ended' }
-});
-```
-
-**Session Created** (Global broadcast)
-```javascript
-socket.on('sessionCreated', (data) => {
-    // { sessionId: 'session_123', participants: ['user123', 'user456'], 
-    //   topic: 'Arrays', difficulty: 'Medium', questionTitle: 'Two Sum' }
-});
-```
-
-**Error**
-```javascript
-socket.on('error', (data) => {
-    // { message: 'Error description' }
-});
-```
-
-## 📊 Data Models
-
-### Session Schema
-
-```javascript
-{
-  sessionId: String,           // Unique session identifier
-  participants: [{
-    userId: String,            // User ID (exactly 2 required)
-    joinedAt: Date
-  }],
-  questionId: String,          // Question identifier
-  status: String,              // "active" | "in_progress" | "completed" | "cancelled"
-  code: String,                // Current code content
-  language: String,            // "javascript" | "python" | "java" | "c++"
-  chatHistory: [{
-    userId: String,
-    username: String,
-    message: String,
-    timestamp: Date
-  }],
-  startTime: Date,
-  endTime: Date,
-  createdAt: Date,
-  updatedAt: Date
-}
-```
-
-## 🔗 Integration Guide
-
-### Matching Service Integration
-
-When users are matched, the matching service should call the collaboration service:
-
-```javascript
-// After matching two users
-const response = await axios.post('http://collaboration-service:5051/collaboration/session', {
-  users: [
-    { userId: matchedUser1.id },
-    { userId: matchedUser2.id }
-  ],
-  difficulty: matchRequest.difficulty,
-  topic: matchRequest.topic
-});
-
-// Notify users of the new session
-const { sessionId } = response.data.payload;
-```
-
-### Frontend Integration
-
-```javascript
-import collaborationService from './services/collaborationService';
-
-// Connect to WebSocket
-await collaborationService.connect();
-
-// Join a session
-collaborationService.joinSession(sessionId, userId, username);
-
-// Listen for events
-collaborationService.socket.on('code-updated', handleCodeUpdate);
-collaborationService.socket.on('chat-message', handleChatMessage);
-
-// Send code changes
-collaborationService.sendCodeChange(sessionId, code, language);
-
-// Send chat messages
-collaborationService.sendChatMessage(sessionId, message);
-```
-
-## Project Structure
-
-```
-collaboration-service/
-├── src/
-│   ├── app.js                    # Express app setup
-│   ├── index.js                  # Server entry point
-│   ├── config/
-│   │   └── database.js           # MongoDB connection
-│   ├── controllers/
-│   │   └── collaborationController.js  # REST API handlers
-│   ├── middleware/
-│   │   └── auth.js               # JWT authentication
-│   ├── models/
-│   │   └── sessionModel.js       # Session schema
-│   ├── routes/
-│   │   └── collaboration.js      # API routes
-│   └── services/
-│       └── socketService.js      # WebSocket event handlers
-├── .env                          # Environment variables
-├── .gitignore                    # Git ignore file
-├── Dockerfile                    # Docker configuration
-├── package.json                  # Dependencies
-├── nodemon.json                  # Nodemon configuration
-└── README.md                     # This file
-```
-
-## 🐛 Error Handling
-
-The service includes comprehensive error handling:
-
-- **400 Bad Request**: Invalid input data
-- **401 Unauthorized**: Missing or invalid JWT token
-- **403 Forbidden**: User not authorized for session
-- **404 Not Found**: Session or question not found
-- **500 Internal Server Error**: Server-side errors
-
-All errors are logged to the console and returned in a consistent format:
-
-```json
-{
-  "success": false,
-  "error": "Error message description"
-}
-```
-
-## Session Lifecycle
-
-1. **Created**: Session created by matching service
-2. **Active**: Users can join and start collaborating
-3. **In Progress**: Code has been modified
-4. **Completed**: Session ended by user or timeout
-5. **Cancelled**: Session cancelled before completion
-
-## WebSocket Connection Management
-
-- Connections are tracked per session in memory
-- Users can disconnect and rejoin without losing session data
-- Session state is persisted in MongoDB
-- Chat history and code are preserved across reconnections
-- When a session ends, all users are notified via WebSocket
-
-## Deployment
-
-### Using Docker
-
+### Docker
 ```bash
-# Build the image
-docker build -t collaboration-service .
-
-# Run the container
-docker run -p 5051:5051 \
-  -e MONGODB_CONNECTION="your_connection_string" \
-  -e JWT_SECRET="your_secret" \
-  -e USER_SERVICE_URL="http://user-service:5050" \
-  -e QUESTION_SERVICE_URL="http://question-service:5050" \
-  collaboration-service
+docker-compose up collaboration-service
 ```
 
-### Scaling Considerations
-
-For production deployment with multiple instances:
-- Use Redis for WebSocket session management
-- Implement sticky sessions or Redis adapter for Socket.IO
-- Consider MongoDB replica sets for high availability
-- Use load balancer with WebSocket support (e.g., nginx with `proxy_http_version 1.1`)
-
-## Testing
-
-### Manual Testing
-
-1. Start the service: `npm run dev`
-2. Use a tool like Postman to test REST endpoints
-3. Use a WebSocket client to test real-time features
-
-### Testing WebSocket Connection
-
-```javascript
-const io = require('socket.io-client');
-const socket = io('http://localhost:5051');
-
-socket.on('connect', () => {
-  console.log('Connected:', socket.id);
-  
-  socket.emit('join-session', {
-    sessionId: 'test_session',
-    userId: 'test_user',
-    username: 'Test User'
-  });
-});
-```
-
-## Development Notes
-
-### Key Features
-
-- **Exactly 2 participants required**: Sessions validate that exactly 2 users are present
-- **Real-time synchronization**: All code changes are broadcast immediately
-- **Persistent chat**: Chat history is saved to MongoDB
-- **Session recovery**: Users can rejoin sessions after disconnection
-- **Automatic cleanup**: Sessions are marked as completed when ended
-
-### Important Behaviors
-
-- **Session ending**: When a user ends a session via REST API, all participants are notified via WebSocket
-- **Rejoin prevention**: Frontend prevents users from rejoining completed/cancelled sessions
-- **Active session detection**: Users with active sessions see a modal on the home page
-- **Route protection**: Invalid collaboration URLs redirect to home page
-
-
-
-## Troubleshooting
-
-### MongoDB Connection Issues
-- Verify `MONGODB_CONNECTION` is correct
-- Check network connectivity
-- Ensure MongoDB is running (if local)
-
-### WebSocket Connection Issues
-- Check CORS settings in `src/app.js`
-- Verify `FRONTEND_URL` environment variable
-- Ensure port 5051 is not blocked
-
-### Session Not Found
-- Verify session exists in database
-- Check sessionId format
-- Ensure session status is not 'completed' or 'cancelled'
-
-### JWT Authentication Errors
-- Verify `JWT_SECRET` matches the main backend
-- Check token format in Authorization header
-- Ensure token is not expired
-
-
-
+## Security Considerations
+- JWT authentication for all protected REST endpoints
+- Session validation: users can only access sessions they're participants in
+- WebSocket authorization: socket events validate user membership
+- CORS protection: configured to only allow requests from frontend
+- Input validation on all user inputs
