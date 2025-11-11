@@ -145,40 +145,6 @@ exports.getSession = async (req, res) => {
     }
 };
 
-exports.updateSessionCode = async (req, res) => {
-    try {
-        const { sessionId } = req.params;
-        const { code, language } = req.body;
-
-        const session = await Session.findOneAndUpdate(
-            { sessionId },
-            {
-                code,
-                language,
-                status: 'in_progress'
-            },
-            { new: true }
-        );
-
-        if (!session) {
-            return res.status(404).json({
-                success: false,
-                error: 'Session not found'
-            });
-        }
-
-        socketService.io.to(sessionId).emit("code-updated", { code, language });
-
-        res.status(200).json({
-            success: true,
-            payload: session
-        });
-    } catch (error) {
-        console.error('Update session code error:', error);
-        res.status(500).json({ success: false, error: 'Server Error' });
-    }
-};
-
 exports.endSession = async (req, res) => {
     try {
         const { sessionId } = req.params;

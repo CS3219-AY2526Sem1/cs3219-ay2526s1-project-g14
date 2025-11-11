@@ -241,9 +241,36 @@ Used ChatGPT while debugging attempt-saving workflow to ensure accurate tracking
 
 ---
 
+## Documentation Files (Also AI-Generated)
+
+### Entry 1: Collaboration Service README
+
+**Date/Time:** 2025-11-11
+
+**File:** `collaboration-service/README.md`
+
+**Tool:** ChatGPT
+
+**Prompt/Command:**
+"Format the WebSocket events into clean tables showing Client → Server and Server → Client events with descriptions"
+
+**Output Summary:**
+Generated markdown tables for WebSocket events documentation, organized into Client → Server events (join-session, code-change, chat-message, cursor-position) and Server → Client events (session-state, user-joined, user-left, code-updated, chat-message, cursor-updated, session-ended, session-ended-confirmed, error). Included payload structures and descriptions for each event.
+
+**Action Taken:**
+- [ ] Accepted as-is
+- [X] Modified
+- [ ] Rejected
+
+**Author Notes:**
+Had all the WebSocket events implemented in code but needed clean documentation. Used copilot to format the events into readable tables. Modified the descriptions to match our actual implementation and added notes about specific events like `session-ended-confirmed`. The table structure was kept but content was adjusted to accurately reflect our codebase.
+
+---
+
 ## Summary Statistics
 
-**Total Files Flagged:** 9
+**Total Files Flagged:** 10
 - Frontend: 6 files
 - Backend: 3 files
+- Documentation: 1 file
 
