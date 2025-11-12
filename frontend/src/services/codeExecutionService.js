@@ -1,3 +1,11 @@
+/**
+ * AI Usage
+ * This file contains code enhanced with GitHub Copilot assistance.
+ * Specific improvements: timeout protection, console capture, and detailed comments.
+ * See /ai-usage-log.md for detailed attribution and modifications.
+ * Date: 2025-10-25
+ */
+
 let pyodideInstance = null;
 let pyodideLoading = false;
 
@@ -31,7 +39,6 @@ class CodeExecutionService {
                 document.head.appendChild(script);
             });
 
-            // loadPyodide is now available globally
             pyodideInstance = await window.loadPyodide({
                 indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.24.1/full/'
             });

@@ -17,11 +17,9 @@ import ClearIcon from '@mui/icons-material/Clear';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import Editor from '@monaco-editor/react';
-import collaborationService from '../../services/collaborationService';
 import codeExecutionService from '../../services/codeExecutionService';
 
 export default function CodeEditorPanel({
-    sessionId,
     code: parentCode,
     language: parentLanguage,
     onCodeChange,

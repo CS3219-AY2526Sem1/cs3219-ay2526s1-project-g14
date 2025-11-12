@@ -1,3 +1,16 @@
+/**
+ * AI Usage
+ * This file contains code enhanced with GitHub Copilot assistance.
+ * Specific improvements: resizable chat panel, WebSocket cleanup, and comments.
+ * See /ai-usage-log.md for detailed attribution and modifications.
+ * Date: 2025-10-28
+ * 
+ * This file contains code enhanced with ChatGPT assistance.
+ * Specific improvements: debugged and refined handleSaveCode logic, and added structured payload for user attempt submission
+ * See /ai-usage-log.md for detailed attribution and modifications.
+ * Date: 2025-11-08
+ */
+
 import { useState, useEffect, useRef } from 'react';
 import { useSelector } from "react-redux";
 import { useParams, useNavigate } from 'react-router-dom';
@@ -249,7 +262,7 @@ export default function CollaborationSession() {
 
             await handleEndSession();
         } catch (err) {
-            console.error("Error submitting attempt:", err); // ERROR WAS LOGGED HERE
+            console.error("Error submitting attempt:", err);
             handleEndSession();
         }
     };

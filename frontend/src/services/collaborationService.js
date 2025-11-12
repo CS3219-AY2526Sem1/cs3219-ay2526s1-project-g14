@@ -1,3 +1,11 @@
+/**
+ * AI Usage
+ * This file contains code enhanced with GitHub Copilot assistance.
+ * Specific improvements: endSessionAndWait Promise pattern, event listeners, and comments.
+ * See /ai-usage-log.md for detailed attribution and modifications.
+ * Date: 2025-10-28
+ */
+
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { MATCHING_API } from '../constants/api';
@@ -33,7 +41,7 @@ class CollaborationService {
             this.socket = io(process.env.REACT_APP_COLLABORATION_URL || 'http://localhost:5051');
             
             this.socket.on('connect', () => {
-                console.log('🔌 Connected to collaboration service, socket ID:', this.socket.id);
+                console.log('Connected to collaboration service, socket ID:', this.socket.id);
                 this.isConnected = true;
             });
 
@@ -131,7 +139,7 @@ class CollaborationService {
             const confirmHandler = () => {
                 clearTimeout(timeout);
                 this.socket.off('session-ended-confirmed', confirmHandler);
-                console.log('✅ Session end confirmed by server');
+                console.log(' Session end confirmed by server');
                 resolve();
             };
 
@@ -170,7 +178,7 @@ class CollaborationService {
             const norm = String(sessionId).replace(/^room:/, '');
             this.socket.emit('code-change', { sessionId: norm, code, language });
         } else {
-            console.warn('⚠️ Cannot send code change - socket not connected');
+            console.warn('Cannot send code change - socket not connected');
         }
     }
 
@@ -179,16 +187,9 @@ class CollaborationService {
         if (this.socket && this.isConnected) {
             this.socket.emit('chat-message', { sessionId, message });
         } else {
-            console.warn('⚠️ Cannot send chat message - socket not connected');
+            console.warn('Cannot send chat message - socket not connected');
         }
     }
-
-    sendCursorPosition(sessionId, position) {
-        if (this.socket && this.isConnected) {
-            this.socket.emit('cursor-position', { sessionId, position });
-        }
-    }
-
 
     // Event listeners
     onMatchFound(callback) {
@@ -219,11 +220,6 @@ class CollaborationService {
         if (!this.socket) this.initializeSocket();
         console.log('Setting up chat-message listener');
         this.socket.on('chat-message', callback);
-    }
-
-    onCursorUpdated(callback) {
-        if (!this.socket) this.initializeSocket();
-        this.socket.on('cursor-updated', callback);
     }
 
     onSessionEnded(callback) {

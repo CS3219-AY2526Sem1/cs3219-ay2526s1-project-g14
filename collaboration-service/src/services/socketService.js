@@ -1,3 +1,11 @@
+/**
+ * AI Usage
+ * This file contains code enhanced with GitHub Copilot assistance.
+ * Specific improvements: connection state tracking, broadcasting logic, and comments.
+ * See /ai-usage-log.md for detailed attribution and modifications.
+ * Date: 2025-10-25
+ */
+
 const { Server } = require('socket.io');
 const Session = require('../models/sessionModel');
 
@@ -41,7 +49,7 @@ class SocketService {
                     socket.sessionId = sessionId;
                     socket.userId = userId;
                     socket.username = username;
-                    console.log(`✅ User ${username} joined session ${sessionId}, socket.sessionId set to:`, socket.sessionId);
+                    console.log(`User ${username} joined session ${sessionId}, socket.sessionId set to:`, socket.sessionId);
 
                     if (!this.sessions.has(sessionId)) {
                         this.sessions.set(sessionId, new Set());
@@ -150,18 +158,6 @@ class SocketService {
                 }
             });
 
-            socket.on('cursor-position', (data) => {
-                const { sessionId, position } = data;
-                
-                if (socket.sessionId !== sessionId) return;
-
-                socket.to(sessionId).emit('cursor-updated', {
-                    userId: socket.userId,
-                    username: socket.username,
-                    position
-                });
-            });
-
             socket.on('disconnect', () => {
                 console.log(`User disconnected: ${socket.id} (${socket.username})`);
                 
@@ -178,7 +174,7 @@ class SocketService {
                     socket.to(socket.sessionId).emit('user-left', {
                         userId: socket.userId,
                         username: socket.username,
-                        message: `${socket.username} disconnected (can rejoin)`
+                        message: `${socket.username} disconnected`
                     });
 
                     // Broadcast updated connection state after user leaves
@@ -198,33 +194,6 @@ class SocketService {
                     this.io.to(socket.sessionId).emit('session-state', {
                         connectedUsers
                     });
-                }
-            });
-
-            socket.on('end-session', async (data) => {
-                try {
-                    const { sessionId } = data;
-                    
-                    if (socket.sessionId !== sessionId) {
-                        socket.emit('error', { message: 'Not in this session' });
-                        return;
-                    }
-
-                    await Session.findOneAndUpdate(
-                        { sessionId },
-                        { status: 'completed', endTime: new Date() }
-                    );
-
-                    this.io.to(sessionId).emit('session-ended', {
-                        endedBy: socket.username,
-                        message: 'Session has been ended'
-                    });
-
-                    this.sessions.delete(sessionId);
-
-                } catch (error) {
-                    console.error('End session error:', error);
-                    socket.emit('error', { message: 'Failed to end session' });
                 }
             });
         });

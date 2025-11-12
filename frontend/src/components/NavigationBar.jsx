@@ -54,7 +54,6 @@ const NavigationBar = () => {
             }}
         >
             <Box sx={{ display: "flex", alignItems: "center" }}>
-                {/* <img src="/logo.png" alt="Logo" style={{ height: 80 }} /> */}
                 <Typography variant="h5" sx={{ fontWeight: "bold", color: "black" }}>PeerPrep</Typography>
             </Box>
 

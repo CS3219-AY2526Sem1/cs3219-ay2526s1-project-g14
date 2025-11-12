@@ -35,9 +35,8 @@ export const handleRegister = (username, email, password) => async (dispatch, ge
     const result = await register(username, email, password);
     if (result.success) {
         dispatch({ type: SET_OTP_EMAIL, email });
-    } else {
-      return result;
     }
+    return result;
 };
 
 export const handleVerifyOTP = (email, otp) => async (dispatch) => {

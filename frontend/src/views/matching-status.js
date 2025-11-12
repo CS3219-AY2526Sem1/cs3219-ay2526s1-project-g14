@@ -1,3 +1,11 @@
+/**
+ * AI Usage
+ * This file contains code enhanced with GitHub Copilot assistance.
+ * Specific improvements: retry logic, timeout handling, rotating messages, and comments.
+ * See /ai-usage-log.md for detailed attribution and modifications.
+ * Date: 2025-10-28
+ */
+
 import React, { useEffect, useState } from "react";
 import axios from "../config/axios";
 import { MATCHING_API } from "../constants/api";
