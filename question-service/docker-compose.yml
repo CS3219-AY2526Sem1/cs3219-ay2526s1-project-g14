@@ -1,0 +1,9 @@
+services:
+  question-service:
+    build: .
+    container_name: question-service-container
+    ports:
+      - "5052:5052"
+    env_file:
+      - .env.production
+    restart: always

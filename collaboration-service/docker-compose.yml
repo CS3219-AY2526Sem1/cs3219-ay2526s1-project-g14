@@ -1,0 +1,9 @@
+services:
+  collaboration-service:
+    build: .
+    container_name: collaboration-service-container
+    ports:
+      - "5051:5051"
+    env_file:
+      - .env.production
+    restart: always

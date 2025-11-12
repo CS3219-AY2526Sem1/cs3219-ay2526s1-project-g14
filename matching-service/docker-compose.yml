@@ -1,0 +1,18 @@
+services:
+  matching-service:
+    build: .
+    container_name: matching-service-container
+    ports:
+      - "5053:5053"
+    env_file:
+      - .env.production
+    depends_on:
+      - redis
+    restart: always
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    restart: always

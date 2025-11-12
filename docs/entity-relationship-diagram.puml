@@ -1,0 +1,109 @@
+@startuml Database structure
+
+' avoid problems with angled crows feet
+
+entity "User" as user {
+    *_id: string <<generated>>
+    --
+    firebaseUid: string
+    *username: string
+    *email: string
+    *password: string
+    *role: RoleEnum
+}
+
+entity "Question" as question {
+    *_id: string <<generated>>
+    --
+    *title: string
+    *description: string
+    *difficulty: DifficultyEnum
+    *topic: [string]
+    *examples: [ { input: string, output: string } ]
+    *questionId: number
+    image: string
+}
+
+entity "Session" as session {
+    *_id: string <<generated>>
+    --
+    *participants: [ { userId: string, joinedAt: datetime } ] 
+    *questionId: string
+    *status: StatusEnum
+    *code: string
+    *language: LanguageEnum
+    *chatHistory: [ { userId: string, username: string, message: text, timestamp: datetime } ]
+    *startTime: datetime
+    endTime: datetime
+}
+
+entity "User Attempt" as userattempt {
+    *_id: string <<generated>>
+    --
+    *sessionId: string 
+    *userId: string
+    *questionId: number
+    *submittedBy: string
+    *status: boolean
+    *code: string
+    *language: LanguageEnum
+    *testCasesPassed: number
+    *totalTestCases: number
+    *timeTaken: number
+}
+
+' Enums
+enum DifficultyEnum {
+    Easy
+    Medium
+    Hard
+}
+
+enum StatusEnum {
+    Active
+    In progress
+    Completed
+}
+
+enum LanguageEnum {
+    Javascript
+    Python 
+    Java
+    C++
+}
+
+enum RoleEnum {
+    User
+    Admin
+}
+
+' === Relationships ===
+' Session references a Question
+session::questionId }o--|| question::_id : refers_to
+
+' Session participants reference Users (embedded array)
+session::participants }o--|| user::_id : includes
+
+' UserAttempt links to User
+userattempt::userId }o--|| user::_id : by
+
+' UserAttempt links to Question
+userattempt::questionId }o--|| question::_id : attempts
+
+' UserAttempt links to Session
+userattempt::sessionId }o--|| session::_id : from
+
+' === Enums relationships ===
+user::role -- RoleEnum
+question::difficulty -- DifficultyEnum
+session::status -- StatusEnum
+session::language -- LanguageEnum
+userattempt::language -- LanguageEnum
+
+legend right
+    == Legend ==
+    *field : compulsory / not null
+    field : optional / nullable
+endlegend
+
+@enduml

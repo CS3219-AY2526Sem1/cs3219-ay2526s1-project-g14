@@ -1,0 +1,99 @@
+.card {
+  flex: 1;
+  min-width: 360px;
+  background: #f8f6ff;
+  border-radius: 14px;
+  border: 1px solid #e5e0fa;
+  transition: background 0.2s ease;
+  padding: 8px;
+}
+
+.title {
+  font-weight: 600;
+  text-align: left;
+  color: #2b2540;
+  margin-bottom: 10px;
+}
+
+.listContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.userRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f1edff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: all 0.25s ease;
+}
+
+.userRow:hover {
+  background: #e7e0ff;
+  transform: scale(1.01);
+}
+
+.currentUser {
+  background: #d9c9ff !important;
+  border: 1px solid #b79cff;
+  transform: scale(1.02);
+}
+
+.leftSection {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.avatar {
+  background-color: #b79cff !important;
+  color: #fff !important;
+  font-weight: 600;
+  width: 28px;
+  height: 28px;
+  font-size: 13px;
+}
+
+.avatarSelf {
+  background-color: #7b5edb !important;
+  color: #fff !important;
+  font-weight: 600;
+  width: 32px;
+  height: 32px;
+  font-size: 14px;
+}
+
+.username {
+  font-weight: 500;
+  color: #2b2540;
+}
+
+.score {
+  font-weight: 600;
+  color: #3e356d;
+}
+
+.motivationBox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 8px 5px;
+  background: #eef3ff;
+  border-radius: 10px;
+}
+
+.motivationIcon {
+  color: #ffb833;
+}
+
+.motivationText {
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: #2b2540;
+  flex: 1;
+}
